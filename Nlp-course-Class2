@@ -1,0 +1,751 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/OmMishra16/ATM-LLD/blob/main/Nlp-course-Class2\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "B4u-53xWELGN",
+        "outputId": "f0da23aa-b342-4143-fe08-a6786d28b828"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: nltk in /usr/local/lib/python3.12/dist-packages (3.9.1)\n",
+            "Collecting nltk\n",
+            "  Downloading nltk-3.9.2-py3-none-any.whl.metadata (3.2 kB)\n",
+            "Requirement already satisfied: click in /usr/local/lib/python3.12/dist-packages (from nltk) (8.3.0)\n",
+            "Requirement already satisfied: joblib in /usr/local/lib/python3.12/dist-packages (from nltk) (1.5.2)\n",
+            "Requirement already satisfied: regex>=2021.8.3 in /usr/local/lib/python3.12/dist-packages (from nltk) (2024.11.6)\n",
+            "Requirement already satisfied: tqdm in /usr/local/lib/python3.12/dist-packages (from nltk) (4.67.1)\n",
+            "Downloading nltk-3.9.2-py3-none-any.whl (1.5 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m1.5/1.5 MB\u001b[0m \u001b[31m16.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hInstalling collected packages: nltk\n",
+            "\u001b[33m  WARNING: The script nltk is installed in '/root/.local/bin' which is not on PATH.\n",
+            "  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.\u001b[0m\u001b[33m\n",
+            "\u001b[0mSuccessfully installed nltk-3.9.2\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "[nltk_data] Downloading package punkt to /root/nltk_data...\n",
+            "[nltk_data]   Unzipping tokenizers/punkt.zip.\n"
+          ]
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "True"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 1
+        }
+      ],
+      "source": [
+        "import os\n",
+        "import re\n",
+        "import random\n",
+        "import string      # for string operations\n",
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import matplotlib.pyplot as plt\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.linear_model import LogisticRegression\n",
+        "import plotly.express as px\n",
+        "# SetUp NLTK\n",
+        "!pip install --user -U nltk\n",
+        "import nltk\n",
+        "nltk.download('punkt')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!gdown 11LWo5nagSmC72hOJM9lm2l05sdQxt4rf"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "TZff5wdmJwb_",
+        "outputId": "b3ecea2f-cd93-46c7-f002-46477eaa594f"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Downloading...\n",
+            "From: https://drive.google.com/uc?id=11LWo5nagSmC72hOJM9lm2l05sdQxt4rf\n",
+            "To: /content/corona_tweets.csv\n",
+            "\r  0% 0.00/1.00M [00:00<?, ?B/s]\r100% 1.00M/1.00M [00:00<00:00, 111MB/s]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "dataframe = pd.read_csv(\"./corona_tweets.csv\")\n",
+        "dataframe.head()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 293
+        },
+        "id": "K7-p4V74KQac",
+        "outputId": "44dc777b-1a9f-4fff-9f9b-31f0dad76999"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "   UserName  ScreenName             Location     TweetAt  \\\n",
+              "0         1       44953                  NYC  02-03-2020   \n",
+              "1         2       44954          Seattle, WA  02-03-2020   \n",
+              "2         3       44955                  NaN  02-03-2020   \n",
+              "3         4       44956          Chicagoland  02-03-2020   \n",
+              "4         5       44957  Melbourne, Victoria  03-03-2020   \n",
+              "\n",
+              "                                       OriginalTweet           Sentiment  \n",
+              "0  TRENDING: New Yorkers encounter empty supermar...  Extremely Negative  \n",
+              "1  When I couldn't find hand sanitizer at Fred Me...            Positive  \n",
+              "2  Find out how you can protect yourself and love...  Extremely Positive  \n",
+              "3  #Panic buying hits #NewYork City as anxious sh...            Negative  \n",
+              "4  #toiletpaper #dunnypaper #coronavirus #coronav...             Neutral  "
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-2e668e5d-a8f1-4e73-ae6f-f64b0355cec3\" class=\"colab-df-container\">\n",
+              "    <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>UserName</th>\n",
+              "      <th>ScreenName</th>\n",
+              "      <th>Location</th>\n",
+              "      <th>TweetAt</th>\n",
+              "      <th>OriginalTweet</th>\n",
+              "      <th>Sentiment</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>1</td>\n",
+              "      <td>44953</td>\n",
+              "      <td>NYC</td>\n",
+              "      <td>02-03-2020</td>\n",
+              "      <td>TRENDING: New Yorkers encounter empty supermar...</td>\n",
+              "      <td>Extremely Negative</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>2</td>\n",
+              "      <td>44954</td>\n",
+              "      <td>Seattle, WA</td>\n",
+              "      <td>02-03-2020</td>\n",
+              "      <td>When I couldn't find hand sanitizer at Fred Me...</td>\n",
+              "      <td>Positive</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>3</td>\n",
+              "      <td>44955</td>\n",
+              "      <td>NaN</td>\n",
+              "      <td>02-03-2020</td>\n",
+              "      <td>Find out how you can protect yourself and love...</td>\n",
+              "      <td>Extremely Positive</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>4</td>\n",
+              "      <td>44956</td>\n",
+              "      <td>Chicagoland</td>\n",
+              "      <td>02-03-2020</td>\n",
+              "      <td>#Panic buying hits #NewYork City as anxious sh...</td>\n",
+              "      <td>Negative</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>5</td>\n",
+              "      <td>44957</td>\n",
+              "      <td>Melbourne, Victoria</td>\n",
+              "      <td>03-03-2020</td>\n",
+              "      <td>#toiletpaper #dunnypaper #coronavirus #coronav...</td>\n",
+              "      <td>Neutral</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>\n",
+              "    <div class=\"colab-df-buttons\">\n",
+              "\n",
+              "  <div class=\"colab-df-container\">\n",
+              "    <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-2e668e5d-a8f1-4e73-ae6f-f64b0355cec3')\"\n",
+              "            title=\"Convert this dataframe to an interactive table.\"\n",
+              "            style=\"display:none;\">\n",
+              "\n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\">\n",
+              "    <path d=\"M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z\"/>\n",
+              "  </svg>\n",
+              "    </button>\n",
+              "\n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-buttons div {\n",
+              "      margin-bottom: 4px;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "    <script>\n",
+              "      const buttonEl =\n",
+              "        document.querySelector('#df-2e668e5d-a8f1-4e73-ae6f-f64b0355cec3 button.colab-df-convert');\n",
+              "      buttonEl.style.display =\n",
+              "        google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "      async function convertToInteractive(key) {\n",
+              "        const element = document.querySelector('#df-2e668e5d-a8f1-4e73-ae6f-f64b0355cec3');\n",
+              "        const dataTable =\n",
+              "          await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                    [key], {});\n",
+              "        if (!dataTable) return;\n",
+              "\n",
+              "        const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "          '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "          + ' to learn more about interactive tables.';\n",
+              "        element.innerHTML = '';\n",
+              "        dataTable['output_type'] = 'display_data';\n",
+              "        await google.colab.output.renderOutput(dataTable, element);\n",
+              "        const docLink = document.createElement('div');\n",
+              "        docLink.innerHTML = docLinkHtml;\n",
+              "        element.appendChild(docLink);\n",
+              "      }\n",
+              "    </script>\n",
+              "  </div>\n",
+              "\n",
+              "\n",
+              "    <div id=\"df-cdb6074c-2637-425e-95b0-953a491123da\">\n",
+              "      <button class=\"colab-df-quickchart\" onclick=\"quickchart('df-cdb6074c-2637-425e-95b0-953a491123da')\"\n",
+              "                title=\"Suggest charts\"\n",
+              "                style=\"display:none;\">\n",
+              "\n",
+              "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\"viewBox=\"0 0 24 24\"\n",
+              "     width=\"24px\">\n",
+              "    <g>\n",
+              "        <path d=\"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z\"/>\n",
+              "    </g>\n",
+              "</svg>\n",
+              "      </button>\n",
+              "\n",
+              "<style>\n",
+              "  .colab-df-quickchart {\n",
+              "      --bg-color: #E8F0FE;\n",
+              "      --fill-color: #1967D2;\n",
+              "      --hover-bg-color: #E2EBFA;\n",
+              "      --hover-fill-color: #174EA6;\n",
+              "      --disabled-fill-color: #AAA;\n",
+              "      --disabled-bg-color: #DDD;\n",
+              "  }\n",
+              "\n",
+              "  [theme=dark] .colab-df-quickchart {\n",
+              "      --bg-color: #3B4455;\n",
+              "      --fill-color: #D2E3FC;\n",
+              "      --hover-bg-color: #434B5C;\n",
+              "      --hover-fill-color: #FFFFFF;\n",
+              "      --disabled-bg-color: #3B4455;\n",
+              "      --disabled-fill-color: #666;\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-quickchart {\n",
+              "    background-color: var(--bg-color);\n",
+              "    border: none;\n",
+              "    border-radius: 50%;\n",
+              "    cursor: pointer;\n",
+              "    display: none;\n",
+              "    fill: var(--fill-color);\n",
+              "    height: 32px;\n",
+              "    padding: 0;\n",
+              "    width: 32px;\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-quickchart:hover {\n",
+              "    background-color: var(--hover-bg-color);\n",
+              "    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "    fill: var(--button-hover-fill-color);\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-quickchart-complete:disabled,\n",
+              "  .colab-df-quickchart-complete:disabled:hover {\n",
+              "    background-color: var(--disabled-bg-color);\n",
+              "    fill: var(--disabled-fill-color);\n",
+              "    box-shadow: none;\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-spinner {\n",
+              "    border: 2px solid var(--fill-color);\n",
+              "    border-color: transparent;\n",
+              "    border-bottom-color: var(--fill-color);\n",
+              "    animation:\n",
+              "      spin 1s steps(1) infinite;\n",
+              "  }\n",
+              "\n",
+              "  @keyframes spin {\n",
+              "    0% {\n",
+              "      border-color: transparent;\n",
+              "      border-bottom-color: var(--fill-color);\n",
+              "      border-left-color: var(--fill-color);\n",
+              "    }\n",
+              "    20% {\n",
+              "      border-color: transparent;\n",
+              "      border-left-color: var(--fill-color);\n",
+              "      border-top-color: var(--fill-color);\n",
+              "    }\n",
+              "    30% {\n",
+              "      border-color: transparent;\n",
+              "      border-left-color: var(--fill-color);\n",
+              "      border-top-color: var(--fill-color);\n",
+              "      border-right-color: var(--fill-color);\n",
+              "    }\n",
+              "    40% {\n",
+              "      border-color: transparent;\n",
+              "      border-right-color: var(--fill-color);\n",
+              "      border-top-color: var(--fill-color);\n",
+              "    }\n",
+              "    60% {\n",
+              "      border-color: transparent;\n",
+              "      border-right-color: var(--fill-color);\n",
+              "    }\n",
+              "    80% {\n",
+              "      border-color: transparent;\n",
+              "      border-right-color: var(--fill-color);\n",
+              "      border-bottom-color: var(--fill-color);\n",
+              "    }\n",
+              "    90% {\n",
+              "      border-color: transparent;\n",
+              "      border-bottom-color: var(--fill-color);\n",
+              "    }\n",
+              "  }\n",
+              "</style>\n",
+              "\n",
+              "      <script>\n",
+              "        async function quickchart(key) {\n",
+              "          const quickchartButtonEl =\n",
+              "            document.querySelector('#' + key + ' button');\n",
+              "          quickchartButtonEl.disabled = true;  // To prevent multiple clicks.\n",
+              "          quickchartButtonEl.classList.add('colab-df-spinner');\n",
+              "          try {\n",
+              "            const charts = await google.colab.kernel.invokeFunction(\n",
+              "                'suggestCharts', [key], {});\n",
+              "          } catch (error) {\n",
+              "            console.error('Error during call to suggestCharts:', error);\n",
+              "          }\n",
+              "          quickchartButtonEl.classList.remove('colab-df-spinner');\n",
+              "          quickchartButtonEl.classList.add('colab-df-quickchart-complete');\n",
+              "        }\n",
+              "        (() => {\n",
+              "          let quickchartButtonEl =\n",
+              "            document.querySelector('#df-cdb6074c-2637-425e-95b0-953a491123da button');\n",
+              "          quickchartButtonEl.style.display =\n",
+              "            google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "        })();\n",
+              "      </script>\n",
+              "    </div>\n",
+              "\n",
+              "    </div>\n",
+              "  </div>\n"
+            ],
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "dataframe",
+              "variable_name": "dataframe",
+              "summary": "{\n  \"name\": \"dataframe\",\n  \"rows\": 3798,\n  \"fields\": [\n    {\n      \"column\": \"UserName\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 1096,\n        \"min\": 1,\n        \"max\": 3798,\n        \"num_unique_values\": 3798,\n        \"samples\": [\n          1071,\n          355,\n          882\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"ScreenName\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 1096,\n        \"min\": 44953,\n        \"max\": 48750,\n        \"num_unique_values\": 3798,\n        \"samples\": [\n          46023,\n          45307,\n          45834\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Location\",\n      \"properties\": {\n        \"dtype\": \"category\",\n        \"num_unique_values\": 1717,\n        \"samples\": [\n          \"Ottawa, Canada\",\n          \"Lebanon\",\n          \"HousePriceMania\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"TweetAt\",\n      \"properties\": {\n        \"dtype\": \"category\",\n        \"num_unique_values\": 15,\n        \"samples\": [\n          \"11-03-2020\",\n          \"13-03-2020\",\n          \"02-03-2020\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"OriginalTweet\",\n      \"properties\": {\n        \"dtype\": \"string\",\n        \"num_unique_values\": 3798,\n        \"samples\": [\n          \"At my local grocery store in New Hampshire... #coronavirus #Covid_19 #NationalEmergency https://t.co/AXuMBSfNU9\",\n          \"Seeing resellers sell masks, alcohols and other necessities in prices which are 5-15x more expensive compared to SRPs makes me wonder how can people be so heartless, insensitive, and opportunistic in these times of crisis. #COVID2019\",\n          \"Where did coronavirus come from, and where will it take us? An interview with Rob Wallace, author of Big Farms Make Big Flu\\r\\r\\n\\r\\r\\nhttps://t.co/Hqp68iu1iN https://t.co/dR4Ys2hCOy\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Sentiment\",\n      \"properties\": {\n        \"dtype\": \"category\",\n        \"num_unique_values\": 5,\n        \"samples\": [\n          \"Positive\",\n          \"Neutral\",\n          \"Extremely Positive\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    }\n  ]\n}"
+            }
+          },
+          "metadata": {},
+          "execution_count": 3
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "fig = px.pie(dataframe, names='Sentiment',hole=0.3, title='Sentiment Pie Chart')\n",
+        "fig.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 542
+        },
+        "id": "2Kx4hYduKUcg",
+        "outputId": "76d0499c-e01e-4e05-ac43-411054ec63d4"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/html": [
+              "<html>\n",
+              "<head><meta charset=\"utf-8\" /></head>\n",
+              "<body>\n",
+              "    <div>            <script src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG\"></script><script type=\"text/javascript\">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: \"STIX-Web\"}});}</script>                <script type=\"text/javascript\">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>\n",
+              "        <script charset=\"utf-8\" src=\"https://cdn.plot.ly/plotly-2.35.2.min.js\"></script>                <div id=\"7b7a2d93-bb4a-422e-b846-058f6bb76bd7\" class=\"plotly-graph-div\" style=\"height:525px; width:100%;\"></div>            <script type=\"text/javascript\">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById(\"7b7a2d93-bb4a-422e-b846-058f6bb76bd7\")) {                    Plotly.newPlot(                        \"7b7a2d93-bb4a-422e-b846-058f6bb76bd7\",                        [{\"domain\":{\"x\":[0.0,1.0],\"y\":[0.0,1.0]},\"hole\":0.3,\"hovertemplate\":\"Sentiment=%{label}\\u003cextra\\u003e\\u003c\\u002fextra\\u003e\",\"labels\":[\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Neutral\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Negative\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Neutral\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Neutral\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Neutral\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Neutral\",\"Neutral\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Positive\",\"Neutral\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Neutral\",\"Neutral\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Positive\",\"Neutral\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Neutral\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Neutral\",\"Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Neutral\",\"Neutral\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Neutral\",\"Neutral\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Neutral\",\"Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Positive\",\"Neutral\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Neutral\",\"Positive\",\"Neutral\",\"Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Negative\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Positive\",\"Neutral\",\"Extremely Positive\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Neutral\",\"Positive\",\"Extremely Negative\",\"Extremely Negative\",\"Negative\",\"Extremely Negative\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Positive\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Neutral\",\"Negative\",\"Neutral\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Negative\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Neutral\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Neutral\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Negative\",\"Extremely Positive\",\"Positive\",\"Negative\",\"Extremely Negative\",\"Positive\",\"Negative\",\"Positive\",\"Negative\",\"Negative\",\"Positive\",\"Neutral\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\",\"Neutral\",\"Neutral\",\"Positive\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Negative\",\"Positive\",\"Extremely Positive\",\"Extremely Positive\",\"Extremely Negative\",\"Neutral\",\"Extremely Positive\",\"Positive\",\"Extremely Negative\",\"Negative\",\"Positive\",\"Negative\",\"Neutral\",\"Extremely Negative\",\"Extremely Positive\"],\"legendgroup\":\"\",\"name\":\"\",\"showlegend\":true,\"type\":\"pie\"}],                        {\"template\":{\"data\":{\"histogram2dcontour\":[{\"type\":\"histogram2dcontour\",\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"},\"colorscale\":[[0.0,\"#0d0887\"],[0.1111111111111111,\"#46039f\"],[0.2222222222222222,\"#7201a8\"],[0.3333333333333333,\"#9c179e\"],[0.4444444444444444,\"#bd3786\"],[0.5555555555555556,\"#d8576b\"],[0.6666666666666666,\"#ed7953\"],[0.7777777777777778,\"#fb9f3a\"],[0.8888888888888888,\"#fdca26\"],[1.0,\"#f0f921\"]]}],\"choropleth\":[{\"type\":\"choropleth\",\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}}],\"histogram2d\":[{\"type\":\"histogram2d\",\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"},\"colorscale\":[[0.0,\"#0d0887\"],[0.1111111111111111,\"#46039f\"],[0.2222222222222222,\"#7201a8\"],[0.3333333333333333,\"#9c179e\"],[0.4444444444444444,\"#bd3786\"],[0.5555555555555556,\"#d8576b\"],[0.6666666666666666,\"#ed7953\"],[0.7777777777777778,\"#fb9f3a\"],[0.8888888888888888,\"#fdca26\"],[1.0,\"#f0f921\"]]}],\"heatmap\":[{\"type\":\"heatmap\",\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"},\"colorscale\":[[0.0,\"#0d0887\"],[0.1111111111111111,\"#46039f\"],[0.2222222222222222,\"#7201a8\"],[0.3333333333333333,\"#9c179e\"],[0.4444444444444444,\"#bd3786\"],[0.5555555555555556,\"#d8576b\"],[0.6666666666666666,\"#ed7953\"],[0.7777777777777778,\"#fb9f3a\"],[0.8888888888888888,\"#fdca26\"],[1.0,\"#f0f921\"]]}],\"heatmapgl\":[{\"type\":\"heatmapgl\",\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"},\"colorscale\":[[0.0,\"#0d0887\"],[0.1111111111111111,\"#46039f\"],[0.2222222222222222,\"#7201a8\"],[0.3333333333333333,\"#9c179e\"],[0.4444444444444444,\"#bd3786\"],[0.5555555555555556,\"#d8576b\"],[0.6666666666666666,\"#ed7953\"],[0.7777777777777778,\"#fb9f3a\"],[0.8888888888888888,\"#fdca26\"],[1.0,\"#f0f921\"]]}],\"contourcarpet\":[{\"type\":\"contourcarpet\",\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}}],\"contour\":[{\"type\":\"contour\",\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"},\"colorscale\":[[0.0,\"#0d0887\"],[0.1111111111111111,\"#46039f\"],[0.2222222222222222,\"#7201a8\"],[0.3333333333333333,\"#9c179e\"],[0.4444444444444444,\"#bd3786\"],[0.5555555555555556,\"#d8576b\"],[0.6666666666666666,\"#ed7953\"],[0.7777777777777778,\"#fb9f3a\"],[0.8888888888888888,\"#fdca26\"],[1.0,\"#f0f921\"]]}],\"surface\":[{\"type\":\"surface\",\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"},\"colorscale\":[[0.0,\"#0d0887\"],[0.1111111111111111,\"#46039f\"],[0.2222222222222222,\"#7201a8\"],[0.3333333333333333,\"#9c179e\"],[0.4444444444444444,\"#bd3786\"],[0.5555555555555556,\"#d8576b\"],[0.6666666666666666,\"#ed7953\"],[0.7777777777777778,\"#fb9f3a\"],[0.8888888888888888,\"#fdca26\"],[1.0,\"#f0f921\"]]}],\"mesh3d\":[{\"type\":\"mesh3d\",\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}}],\"scatter\":[{\"fillpattern\":{\"fillmode\":\"overlay\",\"size\":10,\"solidity\":0.2},\"type\":\"scatter\"}],\"parcoords\":[{\"type\":\"parcoords\",\"line\":{\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}}}],\"scatterpolargl\":[{\"type\":\"scatterpolargl\",\"marker\":{\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}}}],\"bar\":[{\"error_x\":{\"color\":\"#2a3f5f\"},\"error_y\":{\"color\":\"#2a3f5f\"},\"marker\":{\"line\":{\"color\":\"#E5ECF6\",\"width\":0.5},\"pattern\":{\"fillmode\":\"overlay\",\"size\":10,\"solidity\":0.2}},\"type\":\"bar\"}],\"scattergeo\":[{\"type\":\"scattergeo\",\"marker\":{\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}}}],\"scatterpolar\":[{\"type\":\"scatterpolar\",\"marker\":{\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}}}],\"histogram\":[{\"marker\":{\"pattern\":{\"fillmode\":\"overlay\",\"size\":10,\"solidity\":0.2}},\"type\":\"histogram\"}],\"scattergl\":[{\"type\":\"scattergl\",\"marker\":{\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}}}],\"scatter3d\":[{\"type\":\"scatter3d\",\"line\":{\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}},\"marker\":{\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}}}],\"scattermapbox\":[{\"type\":\"scattermapbox\",\"marker\":{\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}}}],\"scatterternary\":[{\"type\":\"scatterternary\",\"marker\":{\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}}}],\"scattercarpet\":[{\"type\":\"scattercarpet\",\"marker\":{\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}}}],\"carpet\":[{\"aaxis\":{\"endlinecolor\":\"#2a3f5f\",\"gridcolor\":\"white\",\"linecolor\":\"white\",\"minorgridcolor\":\"white\",\"startlinecolor\":\"#2a3f5f\"},\"baxis\":{\"endlinecolor\":\"#2a3f5f\",\"gridcolor\":\"white\",\"linecolor\":\"white\",\"minorgridcolor\":\"white\",\"startlinecolor\":\"#2a3f5f\"},\"type\":\"carpet\"}],\"table\":[{\"cells\":{\"fill\":{\"color\":\"#EBF0F8\"},\"line\":{\"color\":\"white\"}},\"header\":{\"fill\":{\"color\":\"#C8D4E3\"},\"line\":{\"color\":\"white\"}},\"type\":\"table\"}],\"barpolar\":[{\"marker\":{\"line\":{\"color\":\"#E5ECF6\",\"width\":0.5},\"pattern\":{\"fillmode\":\"overlay\",\"size\":10,\"solidity\":0.2}},\"type\":\"barpolar\"}],\"pie\":[{\"automargin\":true,\"type\":\"pie\"}]},\"layout\":{\"autotypenumbers\":\"strict\",\"colorway\":[\"#636efa\",\"#EF553B\",\"#00cc96\",\"#ab63fa\",\"#FFA15A\",\"#19d3f3\",\"#FF6692\",\"#B6E880\",\"#FF97FF\",\"#FECB52\"],\"font\":{\"color\":\"#2a3f5f\"},\"hovermode\":\"closest\",\"hoverlabel\":{\"align\":\"left\"},\"paper_bgcolor\":\"white\",\"plot_bgcolor\":\"#E5ECF6\",\"polar\":{\"bgcolor\":\"#E5ECF6\",\"angularaxis\":{\"gridcolor\":\"white\",\"linecolor\":\"white\",\"ticks\":\"\"},\"radialaxis\":{\"gridcolor\":\"white\",\"linecolor\":\"white\",\"ticks\":\"\"}},\"ternary\":{\"bgcolor\":\"#E5ECF6\",\"aaxis\":{\"gridcolor\":\"white\",\"linecolor\":\"white\",\"ticks\":\"\"},\"baxis\":{\"gridcolor\":\"white\",\"linecolor\":\"white\",\"ticks\":\"\"},\"caxis\":{\"gridcolor\":\"white\",\"linecolor\":\"white\",\"ticks\":\"\"}},\"coloraxis\":{\"colorbar\":{\"outlinewidth\":0,\"ticks\":\"\"}},\"colorscale\":{\"sequential\":[[0.0,\"#0d0887\"],[0.1111111111111111,\"#46039f\"],[0.2222222222222222,\"#7201a8\"],[0.3333333333333333,\"#9c179e\"],[0.4444444444444444,\"#bd3786\"],[0.5555555555555556,\"#d8576b\"],[0.6666666666666666,\"#ed7953\"],[0.7777777777777778,\"#fb9f3a\"],[0.8888888888888888,\"#fdca26\"],[1.0,\"#f0f921\"]],\"sequentialminus\":[[0.0,\"#0d0887\"],[0.1111111111111111,\"#46039f\"],[0.2222222222222222,\"#7201a8\"],[0.3333333333333333,\"#9c179e\"],[0.4444444444444444,\"#bd3786\"],[0.5555555555555556,\"#d8576b\"],[0.6666666666666666,\"#ed7953\"],[0.7777777777777778,\"#fb9f3a\"],[0.8888888888888888,\"#fdca26\"],[1.0,\"#f0f921\"]],\"diverging\":[[0,\"#8e0152\"],[0.1,\"#c51b7d\"],[0.2,\"#de77ae\"],[0.3,\"#f1b6da\"],[0.4,\"#fde0ef\"],[0.5,\"#f7f7f7\"],[0.6,\"#e6f5d0\"],[0.7,\"#b8e186\"],[0.8,\"#7fbc41\"],[0.9,\"#4d9221\"],[1,\"#276419\"]]},\"xaxis\":{\"gridcolor\":\"white\",\"linecolor\":\"white\",\"ticks\":\"\",\"title\":{\"standoff\":15},\"zerolinecolor\":\"white\",\"automargin\":true,\"zerolinewidth\":2},\"yaxis\":{\"gridcolor\":\"white\",\"linecolor\":\"white\",\"ticks\":\"\",\"title\":{\"standoff\":15},\"zerolinecolor\":\"white\",\"automargin\":true,\"zerolinewidth\":2},\"scene\":{\"xaxis\":{\"backgroundcolor\":\"#E5ECF6\",\"gridcolor\":\"white\",\"linecolor\":\"white\",\"showbackground\":true,\"ticks\":\"\",\"zerolinecolor\":\"white\",\"gridwidth\":2},\"yaxis\":{\"backgroundcolor\":\"#E5ECF6\",\"gridcolor\":\"white\",\"linecolor\":\"white\",\"showbackground\":true,\"ticks\":\"\",\"zerolinecolor\":\"white\",\"gridwidth\":2},\"zaxis\":{\"backgroundcolor\":\"#E5ECF6\",\"gridcolor\":\"white\",\"linecolor\":\"white\",\"showbackground\":true,\"ticks\":\"\",\"zerolinecolor\":\"white\",\"gridwidth\":2}},\"shapedefaults\":{\"line\":{\"color\":\"#2a3f5f\"}},\"annotationdefaults\":{\"arrowcolor\":\"#2a3f5f\",\"arrowhead\":0,\"arrowwidth\":1},\"geo\":{\"bgcolor\":\"white\",\"landcolor\":\"#E5ECF6\",\"subunitcolor\":\"white\",\"showland\":true,\"showlakes\":true,\"lakecolor\":\"white\"},\"title\":{\"x\":0.05},\"mapbox\":{\"style\":\"light\"}}},\"legend\":{\"tracegroupgap\":0},\"title\":{\"text\":\"Sentiment Pie Chart\"}},                        {\"responsive\": true}                    ).then(function(){\n",
+              "                            \n",
+              "var gd = document.getElementById('7b7a2d93-bb4a-422e-b846-058f6bb76bd7');\n",
+              "var x = new MutationObserver(function (mutations, observer) {{\n",
+              "        var display = window.getComputedStyle(gd).display;\n",
+              "        if (!display || display === 'none') {{\n",
+              "            console.log([gd, 'removed!']);\n",
+              "            Plotly.purge(gd);\n",
+              "            observer.disconnect();\n",
+              "        }}\n",
+              "}});\n",
+              "\n",
+              "// Listen for the removal of the full notebook cells\n",
+              "var notebookContainer = gd.closest('#notebook-container');\n",
+              "if (notebookContainer) {{\n",
+              "    x.observe(notebookContainer, {childList: true});\n",
+              "}}\n",
+              "\n",
+              "// Listen for the clearing of the current output cell\n",
+              "var outputEl = gd.closest('.output');\n",
+              "if (outputEl) {{\n",
+              "    x.observe(outputEl, {childList: true});\n",
+              "}}\n",
+              "\n",
+              "                        })                };                            </script>        </div>\n",
+              "</body>\n",
+              "</html>"
+            ]
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Check tweets distribution\n",
+        "def pie_chart(dataframe):\n",
+        "  # Converting pd object to list of string\n",
+        "  label_types  = dataframe.Sentiment.unique().astype(str)\n",
+        "  # Count tweets for each label\n",
+        "  label_counts = dataframe.Sentiment.value_counts()\n",
+        "  print('Labels in the dataset: ', label_types)\n",
+        "  print(label_counts)\n",
+        "  # labels for the two classes\n",
+        "  labels = label_types #'Positives', 'Negative'\n",
+        "  # Sizes for each slide\n",
+        "  sizes = [count for count in label_counts]\n",
+        "  # Declare a figure with a custom size\n",
+        "  fig = plt.figure(figsize=(5, 5))\n",
+        "  # Declare pie chart, where the slices will be ordered and plotted counter-clockwise:\n",
+        "  plt.pie(sizes, labels=labels, autopct='%1.1f%%',\n",
+        "          shadow=True, startangle=90)\n",
+        "  # Equal aspect ratio ensures that pie is drawn as a circle.\n",
+        "  plt.axis('equal')\n",
+        "  # Display the chart\n",
+        "  plt.show()\n",
+        "\n",
+        "pie_chart(dataframe)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 581
+        },
+        "id": "OVafuhGVKmaS",
+        "outputId": "859f3df6-fe12-4dc3-8c73-056f045321df"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Labels in the dataset:  ['Extremely Negative' 'Positive' 'Extremely Positive' 'Negative' 'Neutral']\n",
+            "Sentiment\n",
+            "Negative              1041\n",
+            "Positive               947\n",
+            "Neutral                619\n",
+            "Extremely Positive     599\n",
+            "Extremely Negative     592\n",
+            "Name: count, dtype: int64\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<Figure size 500x500 with 1 Axes>"
+            ],
+            "image/png": "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LGVNY4TMhBYiAPl9Ckvf2I690cOIszPVLkcEqOMOL2eccQbz589vc1lsbGzr/41GIwsWLGDo0KFkZWXxt7/9rdPnPvTmDLB7927sdntrmDnE7XYzYsSINpcNHTq09f9JSUmEhYW1BpdDl61Zs+a4z3vIKaecwuDBg3njjTe45557ePvtt8nKymLSpEmdelyPP/44Z555ZoetHZs3b2bLli0sWLCg9TJFUfD7/ezbt4/CwkL0ej0jR45svT43N7e1q+6QpUuXMnfuXHbs2EFjYyNerxen04ndbu/0mBa9Xs8VV1zBggULuOqqq2hubuaDDz7g3XffBU7suetKe/cf5JZ/rGC7K+bYBwshei8FVv9vNw6bm3GX5KpdjQhAxx1erFYrublH/2VbvXo1ALW1tdTW1mK1dm5r+8OPO9R18cknn5CWltbmOJPJ1OZ7g+HHWSYajabN94cu8/v9x33ew1133XU899xz3HPPPbz22mtcc801nZ41NGnSJKZNm8a9997LnDlz2lxns9m48cYbue2229rdLjMzk8LCwmOev6ioiPPPP5+bb76ZRx55hNjYWFatWsW1116L2+0+rgG5s2bNYvLkyVRWVrJkyRIsFkvrbLITfe66QsGuvdzyxmr2eSW4CBEsNn5ejEajYeyMvmqXIgJMl0/R2LNnD3fccQcvv/wyCxcu5Oqrr2bp0qVotS1jE4xGIz7fsfeaGTRoECaTieLi4i7tjjjR886ePZu77rqLefPmUVBQwNVXX31c9/vYY48xfPhw8vLy2lw+cuRICgoKjhgI8/Ly8Hq9bNy4kVGjRgEtLSCHz2Bav349fr+fp556qvV5/te//tXmPJ193seNG0dGRgYLFy5k0aJFXH755a1hsLt+JseycdtObluwlgN+CS5CBJsNi/ej1Ws49YI+xz5YiB8cd3hxuVyUl5e3PYleT3x8PD6fj9mzZzNt2jSuueYapk+fTn5+Pk899RS/+93vgJbxGN999x1FRUWEh4e36XI6XEREBHfeeSd33HEHfr+fCRMm0NDQwNdff01kZORxh4eTPW9MTAyXXHIJv/vd7zj77LNJT08/rvvNz89n1qxZzJs3r83ld999N6eddhq33nor1113HVarlYKCApYsWcKzzz7LgAEDmDp1KjfccAPz58/HYDDw29/+FovF0tryk5ubi8fj4ZlnnuGCCy7g66+/5oUXXmhzP9nZ2dhsNpYtW8awYcMICws7YovMzJkzeeGFFygsLGT58uUn/dydjDUbv+e3/9rIASWuy88thOgd1n1ShE6nYfS5OWqXIgLEcU/V+Oyzz0hJSWnzNWHCBAAeeeQR9u/fz4svvghASkoKL730En/4wx/YvHkzAHfeeSc6nY5BgwaRkJBAcXHxEe/roYce4v7772fu3LkMHDiQ6dOn88knn5CTc3K/4Cd63kPdML/85S9P6H4ffPDB1u6rQ4YOHcrKlSspLCxk4sSJjBgxgj/+8Y+kpqa2HvPmm2+SlJTEpEmTmDFjBtdffz0RERGYzWYAhg0bxl//+lcef/xxhgwZwoIFC9pNzx43bhw33XQTV155JQkJCTzxxBNHrHPWrFkUFBSQlpbWOhD6kO76mfyUoih89d0GfvfuWgkuQoSA7z7cx4bF+9UuQwQIjaIoitpFBIq33nqLO+64g9LSUoxGo2p1HDx4kIyMDJYuXcqUKVNUq6O7KIrC0lXf8chHWyjSph37BiLozPL5SW3q3Fg5EVzGX5bL8KkyC0kcnSxL2gl2u52ysjIee+wxbrzxxh4PLl988QU2m438/HzKysq46667yM7O7vRsp0CiKAqfLPuSpxZto8iQpXY5Qoge9vV/dqPVaRh6RsaxDxYhS1b46oQnnniCAQMGkJyczL333tvj9+/xeLjvvvsYPHgwM2bMICEhgRUrVrSbVRXoFEXh0y++4q+ffs8+CS5ChKyvFu5i65clapchejHpNhK9gqIoLPnqW578YC2Fhj7ICnShTbqNBBo4+5eD6TcmSe1KRC8kLS+iV1jxzTrmffidBBchRAsFlr2xndLd9WpXInohCS9CdV+v3chz762kQN8XCS5CiEN8Xj+L5n9PfYX92AeLkCLhRahqzcbvmf+fz9ms7Se7Qwsh2nE2e/jo2c04bG61SxG9iLxbCNVs2LqdFxZ+wnpy8Whk4psQomONVQ4+fX4LXs+xVwkXoUHCi1DF1p27eeXdD1jvz8ahMatdjhCilyvf28jS1wqQOSYCJLwIFRQdKOW1hR+wzpVMgzZC7XKEEAFiz4YqvvnfHrXLEL2AhBfRoyprann13fdYW2emUpegdjlCiACzcUmxrAEjJLyIntNka+a1he/z3QEbxSZZhE4IcWK+fLeQgztq1S5DqEjCi+gRbreHt//3Cd9sK2KfdRAyJVoIcaIUv8Lnr26jud6ldilCJRJeRLdTFIX3F3/B8jWbKIoajkeRXzshxMlxNHlY/MpW/D6/2qUIFci7iOh2y1ev5eNlX1EeNZh6v0ntcoQQQaJsdwPfvL9X7TKECiS8iG61uaCQhR8tptacSrEvWu1yhBBBZtOSYvZuqlK7DNHDJLyIblNaUcVb//2YKree7WSqXY4QIkgte2M7DVUOtcsQPUjCi+gWDqeTBe99QlFZNbssg/DJAF0hRDdxO7x89tL3sgJvCJHwIrqcoii899kXrN+ynfK44TT5ZOl/IUT3qj5g46t3C9UuQ/QQCS+iy61et4nFK7/BEdefgx6r2uUIIUJEwddl7Pi2TO0yRA+Q8CK61L7iEhZ+tBiP3so2b6La5QghQsyX/yyksVrGvwQ7CS+iyzQ22Xj7vU+oqq1nt7k/XlnPRQjRwzwuH0tfL0DxywaOwUzeXUSX8Pl8/PvjJWzbuRtn4hAqPbKeixBCHWW7G9i09IDaZYhuJCMpRZdY8c06ln+zlojkbNbYo9UuR4gTsrt0C0s3L6S4eheN9hquP/vPDMuZ0Hr9W8sf57vCz9vcZmD6GG4577Gjnre+uYoPvn2ZbQfW4PG6iI9KY/bpvyMrIQ+ApZv/xdJNCwE4a/iVTBl2Rettiyq2s3DV37lzxnPotLqueqhB77sP95I5JJa41HC1SxHdQMKLOGnFJWW8v3g5lrAw1rlT8cu0aBGgXF4HaXF9GTvgHF7+/E8dHjMoYwyzT7+r9Xu9znDUc9pdTfz1/d/QL3U4vzr3McLNUVQ1lBBmjACgpGYPn6x7nZumPwKKwguf/Z4B6aNJi+uDz+/j3a+e5ueT7pDgcpw0Wih+60Nif3sFGr281QUb+YmKk+JyufnXR59TXVuHLXkEdc1HfyEXojcbnHkqgzNPPeoxep2ByLDYTp9zyaZ3iQlP4Kozfgw88ZEprf+vqD9AWmwf8tJGAJAa16flsrg+LN28kNyUfLISBxznIwltSck6+n/3LIbPt1IT1UT8TTeqXZLoYhJexElZuupb1m/dTnhqX75tkuZZEfx2lW7mnjcuJcwUTv+0EZw/5hrCzVFHPP77otUMzBjDq0v+zK7SLURb45k4+ELGDzwPgNTYHCobDlLbVAFAZf1BUmOzqWoo5dudn3H3JS/0yOMKBnqjlkFhe4lb+CQapWXAbvXzzxNx1lRMffuqXJ3oShJexAnbXVTMx0u/JDoqim8diSjSXSSC3MCMMQzLmUhcRDLVjaV8tOZV5n96L7+9+Bm0R+jWqW4q46uCDzkz/zLOHjGT/ZU7+c/Xz6LT6jktbxrJMVlccMq1PPtJS8vMhadeR3JMFs98/DsuPvUGth9cy6fr3kSn1XPZuFvITR3akw85YEREehi+7XUMeza1uVxxuym77/dk/fMdNFqZoxIsJLyIE2J3OHn3w8U02ppxJ+dT1yTdRSL4jc49s/X/aXF9SIvrwwP/vIpdpZvJSx/Z4W0URSEzoT8XnnodABnx/SirK2JVwUecljcNgImDLmDioAtab/PtzsWYDBZykgbx0MI5/O6S56m3VfGPZQ/z55lvY9AZu/FRBhiNn/Carxm5YiE6Op4e7di8mdo33iTumjk9W5voNhJDxXFTFIVPv/iK73fsIik9i422CLVLEkIV8ZGpLQNwG0uOeExkWCzJMVltLkuOzqTOVtnh8TZHA4vWv8Xl439NUeUOEqPSSYxKp3/aCPx+L5X1B7v0MQQyna6JId8/zSlb3j1icDmk6pln8FRU9FBlortJeBHHbVvhHhavXE1yQjzrHfGyGJ0IWXW2KpqdjUSGxR3xmD7JQ6isb7vmSGXDQWIjkjo8/r/fPM8ZQy8lJjwBRfHj8/+42aDP70NR/F1TfCDT+Im1r2PCsvtIrN7TqZsodjuVf3mymwsTPUXedcRxabY7+PfHS3A6XTisyex3WtQuSYgu4/I4OFi9m4PVuwGoaSrnYPVuapsqcHkcvPfNi+yrKKCmqZydBzfw0uL7iY9KZWDG6NZzzPvoTlZufb/1+zPzL2Vf5XYWb1hAVUMJa3ct4+vtnzBp8EXt7n/7wXVUNhxsvS4zIY+K+mK2FX/HqoKP0Wq1JEZndO+T0MtpdU0M3jaP4WteQ8fxBbnGjz/GvmFDN1UmepKMeRHHZdmq79i5p4i+fXL4sO7IMyyECET7q3Yy76Pftn7/v2/mA3Bq/7O5cuLtlNTu5bvCz3G4bUSFxTEgfTTnj5nTZgxKdWMpNmdD6/dZiQO4/uw/8+GaV1m04S3iIlK4dNyvGNNvapv7dntd/HvVM/xy6v1oNS2fK2PCE7h8/K28veIv6HUGrjr9boz6UF292k+MYxNDvzv+0HK48ocfJuc//5HBuwFOoyiKbAAhOqW4pIzHnvsHGq2WEnMOm2Ssi+gms3x+UptkR3LRQquzMWDr6yRXbO+S8yX/+c/EXHnFsQ8UvZZET9EpPp+P9xcvp66hEUtMEltssqaLEKK7KUQ7NzHhi/u6LLgAVD39NL7Gxi47n+h5El5Ep6zdvI21m7eRlZ7K2qZI2QJACNGttLpmBu6cz8hvX0av+I59g+Pgq6ujat4zXXpO0bMkvIhjamiy8cHnK9DrdTQbomSQrhCiGylEubYwfvm9pJRt67Z7qXv3XVy7dnXb+UX3kvAijmnxiq/ZW3ywpdWlMVLtcoQQQUqrszOg8EVGffMiBn/Xtra04/VS/uij3XsfottIeBFHtbuomGWrviMpIY4STxjl7lCd6SCE6D4Kke5tjF9+H6ml3/fYvdq/+ZamL77osfsTXUfCizgin8/HB5+voKnZTnxMDOuk1UUI0cU0Ogd5u19m9OrnMfg9PX7/Vc88i0y6DTwSXsQRbdi6g03bdpKVnspuZxh1Xtm/SAjRVRQiPNsZv/w+0g5uVq0K1/btNC1dqtr9ixMj4UV0yOVys2j5KjQaDSaLhfVNsqaLEKJraHRO+u95jTFfP4vR71a7HKqffU5aXwKMhBfRoe82fc+OPfvITEuhoNlKs08WYxZCnCyFcO9Oxq38PekH1qtdTCvXzp00fb5E7TLEcZDwItqxNdtZtPxrLCYTOoOJzbIgnRDiJGl0TnL3vs4pq+Zh8jrVLqed6uek9SWQSHgR7Xy1ZgP7iktIT01mhz0Ml1+ndklCiIClEO7bxdiVvyezeJ3axRyRq7CQps8+U7sM0UkSXkQbNXUNfP7lN0RFhqPV6fleWl2EECdIo3PRd//bnPLV05h7YWvLT1U99xyK/8Q3fRQ9R8KLaGP56jWUVVSRmpTIbocFu7S6CCGOm4LVt4exX/6erH3fql1Mp7l376Fx0SK1yxCdIOFFtCqtqGL56rXEx8Wg1WrZIjOMhBDHS+emT/E7nPrVXzF7HGpXc9yqn58vrS8BQKaQiFZffbee6rp6huTlUuQ00xAiM4wavvkX9sJv8NQeRKM3YkobSMzkORji0gHwNlRQ8sK1Hd42/qJ7sA6YcMz7qFn8LLZNnxFz5vVEjrkIAMXroeazedh3fYvOGkPs2b/Ckj38x7q++y++xipiz7rp5B+kED0gzL+PoavnE+ZuVruUE+bes4empUuJPPtstUsRRxEa707imKpq6vhqzUYSYmPQaDQhNcPIeWArESPPw5jcDxQf9SvfpOJf95N67Xy0RjO6iHjSb3mrzW2aNn9G45r/Yekz6pjntxeuxlW6E114bLtzuMt3kzz7SRx711P90V9Iv/VtNBoNnvpybJsXk3L10135UIXoHjo3OUX/I2fPV2pX0iXq3l4g4aWXk24jAcDqdZuorq0jMT6Wg04T1R6j2iX1mKQrHiQ8fyrGhCyMiX2IO+8OfI1VuCt2A6DR6tCFx7T5shd+Q1jeBLTGo++w7W2qpnbJi8Sffydo235W8NQcwJJ7KsaELCJGnoff3oDf0QhA7efPE3P6HLSmsO550EJ0kTBlP6et+kPQBBcA+5o1OHcWql2GOAoJL4L6xiZWfLuO6KjIlrEuIdTq0hG/q6XJW2vu+Hlwle/GU7mX8KFH/2SmKH6qP/4rkadegjEhq931xsQcXAcL8HtcOPdtQBcei9YSiW3bcjR6I2H9x538gxGiu+jcZJf8m9NWPkGYK3C7iY6k7u23jn2QUI10Gwm+2/g9ZRXVDOyXQ51HT2kI7xytKH7qlr2MKW0QxoTsDo+xbfkcQ1wG5vSBRz1X47f/QaPVETHqwg6vD88/C3dlEaWv/gqdJZL4i+7G77TRsGoBST+fS92Xb2Hf/iX66GTizv0N+oj4k314QnQJCwcYuup5rK5GtUvpNg0ffUzib3+LLjpa7VJEByS8hLhmu4Mvvl5DRHgYOp2OHbbQ7qao/Xw+7qr9JM96osPr/R4XzQUriR535VHP4yrfTeP6D0m5+u9oNJoOj9Ho9MSdfXOby6o/eZqIURfgrtiLY9c3pFzzDI3f/Ze6pS+RMOO+E3tQQnQVrYfMko/I3blM7Uq6neJ0UvfvfxN//fVqlyI6IN1GIW7t5m0cKC0nNSkRr1/DLnvohpfaJfNx7FlL0s8fRR/ZcSuHfefXKB4X1iFTjnou14Ft+JsbKJl/DfufuJD9T1yIr7GSuuWvcnD+Lzu8jXP/Fjw1+4kYeT7O4i1Y+oxGazQTNmACzuLvT/rxCXEyzJRwyjcPhERwOaTun/9E8fnULkN0QFpeQpjL5WbZqu8wm0wYDHp22s24ldDLs4qiULf0BeyF35D087kYopOPeKxty+eE5Z6CLizqqOe0DjkDc/awNpdV/uuPWAefSXj+1PY1eN3ULplP/AV3otHqQPGjHFpqwu9DUWTdCaESrYeM0k/pt+NztSvpcd7SMpqWLiNymsw86m1C751KtNpUsJN9B0pIS0kEYHuzVeWK1FG7ZD62bSuIv+B3aI1h+Gx1+Gx1+D2uNsd56kpxHdhG+LBpHZ6n5OWbsBeuBkBnicSYkN3mC60enTWmdf2Yw9WvfhdLn9EYk/oCYEobhL1wNe7KfTRt+Bhz2tHH1wjRHUyaUsZ880BIBpdD6t5+W+0SRAek5SVEKYrC1+s2oQFMRiPVbkNITY8+nG3jpwBU/PPeNpfHnXt7m1YS25Yl6CLiMeeM6PA83tqD+F32475/d1UR9h1fkTLnmdbLwgaMx3nge8oX3I0hLo34C3533OcV4oRpvaSXf0b/Alkq3752Lc6dOzHn5aldijiMRpE9wENS0YFSHnnmZaIiI4iOjOCr+ih22kOz5UX0PrN8flKb5PdRDSZNOUO/e44Ie63apfQaMTNnkvzH+9UuQxxGuo1C1Lot22iyNRMVEY7br2GP4+iLrQkhgpzWS2rVIsYvf0iCy080LlqE4vWqXYY4jISXENRka2b1us3EREeh0WjY7bDgDcGBukKIFkZNBaPWPMSAbR+rXUqv5Kurw7ZqldpliMPIO1YI2lxQSHl1NUnxLXvtSKuLECFK6yOlZjETlj9IlK1a7Wp6tcYPP1K7BHEYGbAbYvx+P1+v24hep0ev12Pzaalwh+ZAXSFCmUFbxdA1zxNlq1S7lIDQ9MUX+GzN6MJlLFZvIC0vIWbP/oPs3LOflMSWRdj2OixAxyvACiGCkMZHct1SJn7xgASX46A4nTQtXaJ2GeIHEl5CzNrNW7E7nIRbW1bSlS4jIUKHQVvNyHWPMmjze2qXEpCk66j3kG6jENJka2bNpq3ExUaj0Who8OqoCdG1XYQIKRofSXVfMnjTf9SuJKA1f/cdnspKDImJapcS8qTlJYRs372Pqpo64mOjAWl1ESIU6LW1jNgwV4JLV/D5aPz0U7WrEEh4CSmbtu0EwKBvaXDbK+FFiOCl8ZHYsJJJX9xPTEOZ2tUEDek66h2k2yhE1DU0smV7IXEx0QDUePTUew3qFiWE6BZ6XR1D1r9IbP0BtUsJOs6CAtz792PMylK7lJAmLS8hYvuuvdTWNxAX07IbsrS6CBGENH4SGlcxYdkfJLh0I9vKlWqXEPIkvISIDVt3oNVq0el0ABQ7zSpXJIToSjpdPUM3P0n+hn/KC3s3s638Uu0SQp50G4WAqpo6Cgr3EB8bA4DNq6NOuoyECA4aP/FN3zJk3QIJLT3EvnYtfrsdbViY2qWELPldDwEFu/ZQ29BIbHQkAMUuk8oVCSG6gk7XwNAtf2WoBJcepbjdNH/7rdplhDT5fQ9yiqKwbksBRoMBrbblx31AuoyECGwaP3G275iw7PfE1+xTu5qQJF1H6pJuoyBXWVPLrn3FrWu7eBUolb2MhAhYOl0jAze/QmL1HrVLCWm2ryS8qEnCS5Dbva+YhiYbqUkJAJS7TPgUaXATIuBo/MQ2ryd/zZvo8KtdTcjzlpbhLCzE3L+/2qWEJAkvQa5g1160Gk1rl9FBGe8iRMDR6poY+P2rJFXuUrsUcZjmL7+U8KIS+QgexOwOJ9sK9xDzw0BdgBIJL0IEED8xjg1MXHafBJdeSMa9qEdaXoLY7qJiauoayMlIA6DZp5Up0kIECK3OxoCtr5NcsV3tUsQR2DduxGezoQsPV7uUkCMtL0Fsz/4DeL1ejMaWwFIhA3WFCAAK0c5NTPjiPgkuvZ3Xi2PjJrWrCEkSXoKUoihs3r6LsLAftwGQ8CJE76bVNTNwx/OM/PZl9IpP7XJEJzg2bVK7hJAk3UZBqqyymrLySmKifhzvIuFFiN5KIcr1PUO/ewWDX0JLIHFs3Kh2CSFJwkuQ2ld8kMZmO2kpSQB4/BpqPDLeRYjeRquz03/7m6SWfq92KeIEOLZsQfH70WilI6MnSXgJUruLDqDhxynSVR4DChqVqxJC/Egh0l3AsG9fxuD3qF2MOEF+mw3X7t0yZbqHSXgJQn6/nx17iogI/3HTMOkyEqL30Ogc9NvxFuklm9UuRXQBx6ZNEl56mLRzBaHyqhpq6uqJjPhx+p6EFyF6A4UITwHjl98nwSWIyIyjnictL0HoYFkFtmY76T+Md1EUqJTwIoSqNDoH/QrfIf3ABrVLEV1MZhz1PAkvQehgWQUKSut4l3qvHrfsZySEShTCvYUM/+oFjD632sWIbuAuKsJXX48uOlrtUkKGvKMFoR2792Exm1u/r5ZZRkKoQqNzkrv3dU5ZNU+CSzBTFBybpRuwJ0l4CTINTTZKKiqJPGy56jqvNLAJ0bMUwn27GLvy92QWr1O7GNEDHJu3qF1CSJF3tSBzsKyCxqZmcjLTWi+rk5YXIXqMRueiz56FZBV9p3Ypoge59uxRu4SQIuElyBwoLW/Zz8jwY2CRlhcheoKC1beXYV/Px+xxqF2M6GHuvXvVLiGkyLtakNlXXIJe/+OP1e3XYPPJj1mIbqVz02ffv8neu1rtSoRK3EVFKD4fGp1O7VJCgryrBRG/30/RgVLCrT8uTietLkJ0rzD/Poaunk+Yu1ntUoSKFI8Hz4EDGLOz1S4lJMg7WxCprW+k0WZrs5O0jHcRopvo3OQU/Y+cPV+pXYnoJVx790p46SEy2yiIVNXU0uxwYD0svNRKy4sQXS5M2c9pq/4gwUW0IYN2e468swWRqto6vF5f28G60vIiRNfRuckufp8+u1aqXYnohdx7ZNBuT5GWlyBSWV2LorS9rEFaXoToEhaKOXXVnyS4iCNyheiMo+zsbJ5++ukevU8JL0Fkf0kZZtOPexj5FLD75UcsxEnResgs+y9jVzyO1dWodjWiF+uO6dJz5sxBo9Hw2GOPtbn8/fffR6PRdPn9Hc3rr79OdAdbIKxdu5YbbrihR2uRd7Yg4fV6KSmraDNYt9mnA3r2l1uIYGLmIKeu/hO5O79QuxQRAPw2G56Kyi4/r9ls5vHHH6eurq7Lz90VEhISCAsLO/aBXUjCS5CormvAZndgtfy4p5HNJ+sNCHFCtB4yyj9g3Iq5WJ0NalcjAoh7f1GXn3Pq1KkkJyczd+7cIx6zatUqJk6ciMViISMjg9tuu43m5h+n75eVlXHeeedhsVjIycnhnXfeadfd89e//pX8/HysVisZGRn86le/wmazAbBixQquueYaGhoa0Gg0aDQaHnjgAaBtt9HMmTO58sor29Tm8XiIj4/nzTffBFqW9Zg7dy45OTlYLBaGDRvGf/7zn+N6TiS8BInK6hrsdkeblhcJL0IcP5OmlDHfPEC/HZ+rXYoIQN5uaHnR6XQ8+uijPPPMMxw8eLDd9Xv27GH69OlceumlbNmyhYULF7Jq1SpuvfXW1mN+8YtfUFpayooVK/jvf//LSy+9RGVl21q1Wi3z5s1j27ZtvPHGG3zxxRfcddddAIwbN46nn36ayMhIysrKKCsr484772xXy6xZs/joo49aQw/A4sWLsdvtzJgxA4C5c+fy5ptv8sILL7Bt2zbuuOMOZs+ezcqVnR9PJqM5g0RdQyN+RUF/2OqOzRJehOg8rZf0skX03/6Z2pWIAOatKO+W886YMYPhw4fzpz/9iVdffbXNdXPnzmXWrFncfvvtAPTr14958+YxefJk5s+fT1FREUuXLmXt2rWMHj0agFdeeYV+/fq1Oc+h20NLa8rDDz/MTTfdxPPPP4/RaCQqKgqNRkNycvIR65w2bRpWq5X33nuPq666CoB33nmHCy+8kIiICFwuF48++ihLly5l7NixAPTp04dVq1bx4osvMnny5E49HxJegkRDU/vVPaXlRYjOMWnKGfrtc0TYa9UuRQS47hjzcsjjjz/OmWee2a7FY/PmzWzZsoUFCxa0XqYoCn6/n3379lFYWIher2fkyJGt1+fm5hITE9PmPEuXLmXu3Lns2LGDxsZGvF4vTqcTu93e6TEter2eK664ggULFnDVVVfR3NzMBx98wLvvvgvA7t27sdvtnHXWWW1u53a7GTFiRKefCwkvQaKuvqHdyHMJL0Icg9ZLasUSBmz7WO1KRJDwVlR027knTZrEtGnTuPfee5kzZ07r5TabjRtvvJHbbrut3W0yMzMpLCw85rmLioo4//zzufnmm3nkkUeIjY1l1apVXHvttbjd7uMakDtr1iwmT55MZWUlS5YswWKxMH369NZaAT755BPS0tLa3M5kMnX6PiS8BImK6lpMh02TBgkvQhyNUVNB/prnibJVq12KCCLdGV4AHnvsMYYPH05eXl7rZSNHjqSgoIDc3NwOb5OXl4fX62Xjxo2MGjUKaGkBOXz20vr16/H7/Tz11FNotS3DYf/1r3+1OY/RaMTn8x2zxnHjxpGRkcHChQtZtGgRl19+OYYfFk8dNGgQJpOJ4uLiTncRdUTCSxBQFIWq2lrMxrbhRca8CNEBrY+UqqUM/P5DtSvpUevsdv5RW8M2p4sqn5d5qWlMjYhovf6+slLeb2y7js2EMCsvZWQc8Zw+ReG5mmo+amyk2uslUa/n4sgoboqLa20J/kdtDf+obemOuzY2lmti41pvv9nh4KGKct7Nykbfw2uWdBdvTU23nj8/P59Zs2Yxb9681svuvvtuTjvtNG699Vauu+46rFYrBQUFLFmyhGeffZYBAwYwdepUbrjhBubPn4/BYOC3v/0tFoul9eeUm5uLx+PhmWee4YILLuDrr7/mhRdeaHPf2dnZ2Gw2li1bxrBhwwgLCztii8zMmTN54YUXKCwsZPny5a2XR0REcOedd3LHHXfg9/uZMGECDQ0NfP3110RGRnL11Vd36nmQ2UZBoNnuwO5wtml58SngVeTHK8ThjNoqRq15OOSCC4Dd7yfPZOb+pKQjHjPBamVl39zWr7+kph71nK/U1vBufT1/SEzi45wc/i8hgVdra3m7vuUT/U6nk2erq3kyJZW/pKQyr7qaQpcTAK+i8OeKcv6UlBw0wQXAW9v946YefPBB/H5/6/dDhw5l5cqVFBYWMnHiREaMGMEf//hHUg/7+b355pskJSUxadIkZsyYwfXXX09ERARmc8vyGsOGDeOvf/0rjz/+OEOGDGHBggXtpmaPGzeOm266iSuvvJKEhASeeOKJI9Y4a9YsCgoKSEtLY/z48W2ue+ihh7j//vuZO3cuAwcOZPr06XzyySfk5OR0+jnQKMpPF5QXgaakvJI/PTWf+Nhowq0tKdju0/JOxZFHhAvRm83y+UltsnbdCbU+UqqXM3DLe113zgA2aOeODlteGv1+nk1L7/R5bj54gDi9noeTU1ov+03JQUwaLU+kprKosZE36mp5NysbgCv3F3FNbCzTIyJ5qaaGaq+X+44SpgJV3sYNaC2WYx+oooMHD5KRkcHSpUuZMmWK2uUcN+k2CgKNTTZcbneblhe3bAsgBAAGbTX5a+cT3dQ9U1iDyVq7nQm7dxGp1XFqWBi/SUggWnfk7ufhFgv/rq+nyO0m22hkh9PJBoeDuxITAehvMlHkdlPq8aAA+91u+hlNFLvdvNdQz3+ys3vmgfUwb00txvS0Yx/Yg7744gtsNhv5+fmUlZVx1113kZ2dzaRJk9Qu7YRIeAkCDU02vD5fmzVe3ErwNMMKcUI0PpLqVjJ403/VriQgTLCGMzUignSDgWK3h6erq7jx4AHeycxCd4Runetj42j2+zlv3150gA/4TXwCF0RGAdDXZOL2hASuO3AAgNsTEuhrMvHLA8X8NiGRVc3NPFddjV6j4b7EJEb38BLz3cVXWwO9LLx4PB7uu+8+9u7dS0REBOPGjWPBggWtA2kDjYSXINDUbEcDbaZKu6TlRYQwvbaW/PXPE9NQpnYpAePcyMjW//c3mckzmZi2by9r7HbGWjvuwvusqYmPGxv5S0oquSYjO5wu5lZWtAzcjWoJMD+LjuFn0T+uJ/J+QwNWrZbhFgvn7dvLwqxsKrwefltaypI+fTBqA/+1y9fYpHYJ7UybNo1p06apXUaXkfASBBxOV7vLpNtIhCSNj8T6VQzZ+K9jHyuOKsNoJEano9jjZiwdh5cnqyq5LjauNfj0N5kp9Xp4ubamNbwcrs7r5fmaat7MyGSL00G20dj65UWhyOOmv8nc7naBRnG3f00WXUvCSxBwOl38dNi1S7qNRIjR6+oYsv5FYusPqF1KUCj3eKj3+UjQH/ltwuH3t5uyqkWD/wjzQB6rquQXMTEkGwxsdTrxHHacT1HwBcn0EcXpVLuEoCfhJQg02+3odG1fQqTlRYQMjZ+Ehq8ZvOFdWfvhKJr9ford7tbvSzwetjudROl0ROl0PF9dzdkREcTrdRS7PTxVVUmmwcCEsB9bXa45UMzU8Ahm/bCs/Bnh4bxYW0OKwUCuych2p4s36mq5pINWl9XNzRS53cz9YWbSELOZfW43X9pslHu9aDUacn6yVlWg8nfQGi66loSXINDUbEf/k09HMmBXhAK9rp5BG18ivna/2qX0etucDuYc+LFV6vGqlj14Lo6M5I9JyRS6XHzQ2ECjz0eiXs94q5Vfxye0GYNywO2mzudt/f73SUnMq67mwYpyan+43RVR0dwcH9/mvp1+Pw9XVPBUairaH8bmJRsM/D4xid+Xl2HUaJibnII5CMa7ACguaXnpbrLOSxB45JlX2FdcQnbGjwsSrW6IpKA5XMWqhDhxx1znReMnoelbBq9bIK0totdJvOdu4g7be0h0PWl5CQJ2uwO9vu1aDIq0vIggpdM1MHjTS8TXFKldihAdUqTbqNtJeAlwfr8fu8PZZo0XAGlOE0FH4yeuaS1D1r2FTn7DRS/ml26jbifhJcA5XW68Ph+6n7a8qFSPEN1Bp2tk4OZXSKzeo3YpQhyT4nIf+yBxUiS8BDiny4XX6yXM2HYfDQkvIiho/MQ2ryd/zRvS2iIChkyV7n4SXgKcz+fHryjofjJKX8a8iECn1TUx6PtXSazcpXYpQhwX6TbqfhJeApxf8YOiwE/2HpHPqCLQRGuaGaYrYZC+BKPDz6ivviBCVioVgUhegLudhJcApyg/ZJefXq5KNUIcnRYfeboKBusP0l9bSpb/IHFNe8gNbyZaa2s97lFzBjf8GqZ9Y+X8XXriqxpUrFqI46MxBcdie72ZhJcApygKCkqbTRlbLpduI6GeBE0T+foDDNCVkKstI4syUqkgwV+Nnh8WOVNoSd2R7W8/wGvDZ4zg08kuPp3sYvSBGC5eY6Dvnhp0Pl9PPhQhjps2SFYK7s0kvAQ4v9+vdgkiROnxMkhXxiB9Cf21peRoysignGSlgnDlx1YUTuBXdIyp7WyNdRlNrMuAhCYTV6yP4JQtjViaHSf5CIToHhoJL91OwkuAUxQFpYN+I71GOo5E10jR1pGvP8gAXQl9NWVkacpJVSqI89eg44dWEIUu7avM8Ddj8ifj0nraXF4V4ea502uYPxHOK0jg7A0+kkpru+6OhegCGoOEl+4m4SUItIzXbZte9FppkRGdZ8LDYH3JD60oJeRQRjoVJCkVhCk/tHB0cUA5lnivmRKjp8Pr/Dr4KL+Oj/JhUHkUl601M2BnDXqPt8PjhehJGpNJ7RKCnoSXANeyNZWC5idNL9LyIjqSqa1hyA+tKH00LWNRUpRKYpVatIf6d3pJ7k3xaCnpxAfYguRmHrygmcipOi7fEMf4zc2EN9iOfUMhuol0G3U/CS8Bzu/309HWmgYJLyErTOMk/4cpx/20pWRTRjrlJPqrMPPD+hM93IpyIsLLK6Fv5z/BNlp8vDq+hlfHKkzZFce56zWkF9egkb1nRQ/TGA1qlxD0JLwEuJ92Fx0iLS/Bzk9fXRWDdSUM0JXSR1NKJuWkKBVEK/VoDiWTXtKKciL66BRWnMgNtRqW5TWwLA+ya8K5cm0YQwvqMMiS7aKHSMtL95PwEuD0ej06nbbdrCNpeQkOURo7+fqDDNSVkKstJVtTRppSQaK/CiM/vBkHQCvKiRhp1vKPkzxHUZyDx6c7sEzRcsmmRCZvdBJd09gl9QlxJFoZ89LtJLwEOINej1arxfeT8CItL4Hjpwu39TlsynGUctgbbQC3opyIfFcdkNQl53IY/CwYU8uCMTC2KIYL1+rJ2VuDVpYaEN1AWl66n4SXAGc0GtBptfh+snCXhJfeJ07T1NqK0k9beuSF2+RHB0Cs34XFb8Kh7dotAr7JbuKbbEhpMHPlughGbm3AbJe9aETX0UV2sPKi6FISXgKcQa9Hp9O17zaSqdKq6M6F20JRvN/EgS4OL4eURbl5ekoN+tPhwu8TmLLRS0J5Xbfclwgturh4tUsIehJeApzR8EO3ka/tu6FJwku3UmPhtlCU7NVyoJtfpbw6+N/wOv43HIaVRnPJGiP9d9Wg88o2BOLE6OPj1C4h6El4CXA6nQ6DXofD2XZxrjAJLyet7cJtLYNlM5RyVRduCzVZHh9rzT13f5tTbWy+GGLsBq5cH89pm22ENTX3XAEi8Ol06GJi1K4i6El4CXAajQaT0YjN3nafF4vWj6Zly0aVKgscgbRwW6jp61Fn/6K6MC8vTKzhhfEK03fGM329QsqBGvlrEseki4lBo9WqXUbQk/ASBEwmY7sBuxpNS4Cx+3UqVdW7BMvCbaFmoLMBsKpXgFbDZwPr+Wwg9KuK4Io1YQzaUYvB3fG2BULo46TLqCdIeAkCZpOp3VRpAIvOF2Lhpf3CbRk/LNwWEyQLt4WaQa56NEo4Si+YPbcrwcEj5zkIn6Ljsk1JTNhkJ7KuSe2yRC8j4aVnSHgJAlER4Xg62JAuTOunRoV6ulsoL9wWaiz4iFDMNGrU6T7qiM3s4/XTanj9NJi8O5bz1mnJLKpBK9sQCEAng3V7hISXIBAbHYnX20F40QXubAlZuE0cEu8z0qjtPeHlcCtzG1mZC+n1YVy5NpzhW+sxObtnarcIDHqZJt0jJLwEgXBrWId7HAXCjKPDF27L1ZaSRTlpVBDvr8IgC7cJIM2rYW8v3+fuYLSLp85yYTxDw4wtiZyxwUVsVYPaZQkVyDTpniHhJQhEWK0dvrdbeknLiyzcJk5GlsfDVxa1q+gct15h4chaFo6E0cUxXLzWQN89Neh8veNvUXQ/nYx56RESXoKA1WpBA/j9frSHTdGz9nB4SdbWM1R/QBZuE12qnzsw11lZl9nEukxIaDJxxfoITtnSiKW5d3Z/ia5jzMxUu4SQIOElCERYwzAYDLg9XsymHzcEi+yG8NLRwm3pSjnJSiVhir3lIAkoogsNdjYAUWqXccKqItw8d3oN8yfCeQUJnL3BR1JprdpliW5izMlRu4SQIOElCFjDwjAZDHg8nrbhRe894YXqZOE20Vv08zSgU2LwaQL7F86vg4/y6/goHwaVR3HZGhMDdtai72CwvQhMuuho9LK6bo+Q8BIEIqxhGIx63J62C2fpNC1dRzZfxz/mQwu3DTzUiiILt4leSAtE+y3U6AKz+6gjBcnNPHhhM1EOPZdviGPc5mbCG2zHvqHo1aTVpedIeAkCYRYzZqMJp6v9FM1InZckamThNhHQEn0GaoJwvcUGi5dXxtfwyliFKbviOHe9hvTiGjSyZkxAkvDScyS8BAGtVktMdCT7DpS0u+5vln9wqmtVyzfSiiICVJpXYbvx2McFLK2GZXkNLMuDnJpwrlgbxtCCOgwut9qVieNgzMlWu4SQIbtHBYm0pEScHSyOVaeTBZNE4MvxhM7Cb/viHDw+vYbrfg0fTE2kPi5S7ZJEJ5mk5aXHSMtLkEiMj0XpoKm5WpekQjVCdK3+rmYgCPuNjsJh8LNgTC0LxsDYohguXKsnZ28N2g72MRO9g3Qb9RwJL0EiNjoSRVFQFAW3y4GtoQ57Qx0VjjJmZ6hdnRAnZ4irHgjdxb++yW7im2xIaTBz5boIRm5twGx3ql2WOJxeL2u89CAJL0EiMjwMqnexcc/XaDxOdBo/WsWPyWigOUWHVS8rfIrAle5txqgk49Z4jn1wECuLcvP0lBr0p8OF3ycwZaOXhPI6tcsSgDEtDY2hl+9jEUQkvASJpOhwsiP8eI3hRMflEBEZRVRUNAajkcbGf2P1FKtdohAnJcZnpkIf2uHlEK8O/je8jv8Nh2Gl0Vyyxkj/XTXovPIhRS3Gvn3VLiGkSHgJEjHxieRkZ+N2OolNSm1zXa0umRQJLyLAJft0VMgrVjubU21svhhi7AauXB/PaZtthDUFz5o4gcKSP0TtEkKKzDYKEjqdjrikNJxOe7vravUyaFcEvgyPDFQ9mrowLy9MrOGXv3Lx2kUJlKbHycoIPcgybJjaJYQU+RwTRBJSMyncsq7d5TX6ZBWqEaJr9fHIANXO8Gth0aA6Fg2CflURXLEmjEE7ajG4pcut22i1mIcOVbuKkCLhJYhExSYCLTOONJof9zOy6yJxaiyYFdnRVgSuAS4bEMwr1XW9XQkOHjnPQfgUHZdtSmLCJjuRdU1qlxV0jH1y0IWHq11GSJFuoyASl5iC3mDE62m/Kqd0HYlAN8Qls2pOlM3s4/XTarjuJgfPXR7L/px4/Jrj37BVdMwyVLqMepq0vASR2KRULNZwHM1NGIymNtfV6pNJ9RSpU5gQXSDG7yLMb8KuDZ3VdrvDytxGVuZCRp2VK9daGb6tHmMHq3OLzpPxLj1PWl6CiMUaQUx8Mo7m9s3CNdLyIoJAnN907INEpxyIcfLk2TX88td+/jstkdqEKLVLCliWYTLepadJeAkiGo2G1Ox+uBztZxxV6dNk5oEIeCleecnqam69wsKRtdx0XTNPzIqhsH8iPl1obcVwMrRhYZj69VO7jJAj3UZBJj45vXWbgMMH7bq1Fup1CcT4qlSsToiTk+nxssasdhXBa11mE+syIaHJxBXrIzhlSyOWZhnofzTmIUPQSNjrcfIxJsjEJqZgMJrwuNv3YVcYZJMjEdhy3TJduidURbh57vQarrnFw1vnJ1CRGqt2Sb2WdBmpQ8JLkIlN/HHQ7k9JeBGBbqCrQe0SQopfBx/l1/Hrqxt54Jootg5OxKuXBvvDhY0erXYJIUnCS5CxWMOJTUzFYWsfXir1GfiR6ZEicA1y1aFR5HdYDQXJzTx4YS0336rn80lJ2KJkXRONyUTYKaeoXUZIkvAShDL6Duxw0K5Ha6JOl6hCRUJ0DTN+IhSL2mWEtAaLl1fG1/DLmxy8eEkcB7LiUUJ0zZiwUaPQWuT3UQ3S/heEkjNy0Oq0+HxedLq2P+IKQyZxvgqVKhPi5CX4DDTKxy71aTUsy2tgWR7k1IRzxdowhhbUYXC1XyQzWFknTVS7hJAlLwFBKDEtm7CIKJob248PkHEvItCletWuQPzUvjgHj0+v4bpfwwdTE6mPi1S7pB4RPlHCi1okvAShiOhY4pPTaW6sb3ddpSEdrzS4iQCW7Zb00ls5DH4WjKnlhhvs/O1nsezNTcCvDc63GUNqKqa+fdUuI2TJu1gQ0mg0ZOflU7Tj+3bX+TQGKgyZpHn2qlCZECevn6dZ7RJEJ3yT08g3OZDSYObKdRGM3NqA2R48U92t0uqiquCMxILEtCy0Oh1er6fddQeN8mlBBK5Bznq1SxDHoSzKzdNTavjlrV7ePSeBquQYtUvqEuETJ6hdQkiT8BKkktJzsEZEddh1VGLsK1sFiIDVz9OITpEVTQONVwf/G17HLdc08cjV0WwfmIhPH6A/R4OBsNPGql1FSJPwEqTCI6NJTM/uMLw4tVZq9Ck9X5QQXUALRPtlemog25xq408X13LLLUa+GJ+EPcKqdknHJWzECHThgVVzsJHwEsSy+w/B7XSgKO3bWaTrSASyJJ8M1wsGtWEeXphUwy9/5eK1ixIoTY8LiFbhcJkirToJL0EsLac/JnMYLmf7BesOGnJVqEiIrpHmDYS3ONFZfi0sGlTH7Vc18IfrItg8NAmvwaB2WUcUMf0ctUsIeRJeglhSeg7RCck01tW0u65RH0eTNrrnixKiC+R0sPGoCA67Ehw8cl4NN9yq5dMzkmiMiVC7pDYsw4djTE9Tu4yQJ+EliOkNBvoNGYWjqbHD6w8YpfVFBKY8t03tEkQ3s5l9vH5aDdfd5OC5y+PYnxOPvxdsQxB5/vlqlyCQdV6CXnrfPLR6HR63G4PR2Oa6ItNABjnXqVSZECduiLMeiFe7DNFDVuY2sDIXMuqsXLnWyvBt9RidKrS+6fVEnjO95+9XtCMtL0EuLbs/UbEJNNW37zqq1ydSp5M3ABF4Un12TErvHRMhuseBGCdPnl3DL3/t57/TEqlNiOrR+7eedhr6uLgevU/RMQkvQc5kCSMnbyi2hroOry8yDerhioToGrE+s9olCJW49QoLR9Zy03XNPDErhl39E3tkG4LI887r9vsQnSPhJQRk9R8MKPh8vnbXFRkH4Ef9fmQhjleSL0AXOBNdal1mE7+/tJZf/8rMl6cl4bB2zxpAGpOJiLPO6pZzi+Mn4SUEpPcZQHhUTIddRw5dhOw0LQJShqd9GBehqyrCzbNn1HDNLR7ePj+BitTYLj1/+Omny8J0vYiElxAQHhVDn4HDaayt7vB66ToSgaiPR6ZLi/b8Ovgwv45fX93IA9dEsXVwIl79yc9NiTxfuox6EwkvISJ3yEg0Gg1ej7vddQeM/fDKxDMRYAa4mtQuQfRyBcnNPHhhLTffqufzSUnYosJP6DzaiAjCJ0/u4urEyZDwEiKy+g0hJj6Rhpqqdtd5NUYOGPupUJUQJy7f1fEgdCF+qsHi5ZXxNfzyJgcvXhLHgax4lONYMybqgvPR/mSpCaEuCS8hwmQJo/+wU7E1dvyCv8s8rIcrEuLkRPndhPlNapchAolWw7K8Bn47s557rg9n/fAkPKZjh5Lon/2sB4oTx0PCSwjpM2g4BqMJl6P9XkfVhjRqdQkqVCXEiYv3SXgRJ2ZfnIPHz6nhulvggymJ1MdFdnicZdQozP3793B14lgkvISQtOz+JKRkUF9T0eH1u8zDe7YgIU5Sik9ewsTJcZj8LDillhtusPO3n8VSmBXdZhuCGGl16ZXkLz+E6PR6Bo4ch6O5CUVpvytvkWkgLo0s/CUCR6bHq3YJIoh8k9PIH2ba+L9brOy97BR0/XOJnHa22mWJDkh4CTE5A4YSFh5Fc1N9u+t8GgN7TYN7vighTlCu26F2CSIIlUY4uaffBj574Cw0MlC3V5LwEmLiUzLI6j+EusryDq/fZR5G+zYZIXqnga6Od0wX4mTpNXquzLtS7TLEEUh4CTEajYYhoyeg0WjwuNsv8mXTxVBmyO75woQ4AQNddWgU2d5CdL2zss4iyZqkdhniCCS8hKDsAUNJTMuktrK0w+t3mkf2cEVCnBgzfiKV7tnLRoS22YNmq12COAoJLyHIYDQx5JTJOGxN+P3+dteXGXOok2nTIkAk+AxqlyCCzND4oQxNGKp2GeIoJLyEqH75o4mMjaextv2KuwDbLKf0cEVCnJhUmXAkuticIXPULkEcg4SXEBUVm0D/oafQcITwUmzMo1Eb08NVCXH8st0etUsQQaRfTD+mZk5VuwxxDBJeQtjAkWMxmsw4mjvY4E6jocAypueLEuI49fe0XzFaiBN109Cb0BzHvkdCHRJeQlhaTh4ZfQdQU17S4fX7TINo1kb0cFVCHJ9Bznq1SxBBol9MP87KOkvtMkQn6NUuQKhHq9UydOyZ7NvxPW6nA6O57awNRaNju3k0o+3LVapQiGPr62lEp8Th0/hUraN5ZzPVn1bj2O/AW+8l89eZRI5qu1+Os9RJxb8qaN7ZjOJTMKeZybg1A2NcxwuhNaxroOrjKtwVbhSfginJRNz0OGLG/9ilW72omqpPW7p/E85NIP6c+Nbr7HvslL5ZSt8/9kWjk9aEY5FWl8Ah4SXE5Q4eRVpOf8oP7CU1u1+76/eY8xni+BazIiuZit5JC8T4LVTrbKrW4Xf5MWeaiZkUQ/Ezxe2ud1W62PfIPmImxZA4IxGtRYurxIXWcOQGcJ1VR+IFiRhTjGj0Gpo2NVHyagn6SD0R+RE4DzipeK+CrNuzANj/t/2EDwnHnGFG8SmUvlFK6pxUCS6d0D+mv7S6BBDpNgpxeoOBERPOwuf1dLhonU9jYLuMfemUuV+5GPOyjYi5jST+pYmL37Wzs7rj1gBFUThnQTOaPzfy/o6jDzitsPmZ876D1KeaCHukkelvN7Orpu15/2+xk9jHG8n4WxMLtrQ937+3ebjgn8E9LiTRp/7nsIihESRdmtSuteWQyv9UEj40nOQrk7FkWTAlmogcEYk+8si1hw8MJ3JUJOZUM6ZEE/Fnx2POMGMvbPl5uspcmNPNhA8KJ3xQS2hxlbX8HVcvqsaaZyWsT1jXP9ggdNMwaXUJJBJeBP3yR5OUkUN1+cEOr99pHkGzNryHqwo8K/d7uWWMkW+vtbLkqjA8fjj7bTvN7vYbLjz9rRsNx36hVBSFixc62Fvn54OfhbHxRitZUVqmvvXjeT/a6eGd7z18fpWVJ6aaue4jB9X2lvV7GpwKv//CxXPnBveGm+me9usV9SaKX6FpSxOmZBNFTxax/dfb2fPgHhrXd357A0VRsBXYcJW5sOZZATClm3BXuHHXuHFXu3GVuzClm3BVuqj7qo7ESxK76yEFlf4x/WWGUYCR8CIwmsyMGH8WbqcDr7d9K4Bfo+d7yzgVKgssn822Mme4kcGJOoYl63j9IjPFDQrry9q2kmwq9/HUN27+cdGxA8WuWj/fHvQx/zwzY9J05MXrmH++GYcH/rm15We1vdrP6dk6Rqfq+Hm+gUiThn11LcHmriVObh5tIDMquP/UczxutUs4Km+jF7/TT9UnVYTnh5N9ZzaRIyMpfraY5h3NR72tz+6j4MYCtl23jf1/3U/q7FTCh7R8mDCnmkm6NImivxRR9GQRyZclY041U/p6KclXJGPbamPX73ex+4+7ad559PsJZdLqEnjUb2sVvULesFNZt2IRNeUlJKVnt7t+n2kwA5zrifbV9HxxAarhh164WMuPL4p2j8LM/zp47lwzyeHHDhSuHxZgM+t/PIdWo8Gkh1XFPq4bCcOSdLy03k2dQ2FvnR+HRyE3VsuqYi8byn08f15wt7oA5Llt9OqXsx8a3yJHRhI/rWVArSXLgn23ndrltVgHWI94U61ZS98H++J3+mkuaKbsn2UYEgyED2wJMLFnxhJ7Zmzr8XWr6tCatYTlhlF4TyF9/9QXT52HA/MP0P8v/Y86xiYUSatLYJLfYgGAOczK8HFTcDY34fO1X7JU0WjZHDZBhcoCk19RuP0zJ+MzdAxJ1LVefsdnTsZl6LhoQOeWtB8QryUzSsO9y5zUORTcPoXHV7k42KhQZmvpKpmWq2f2UANjXrYx5wMHb1xswWqEmz9x8sJ5Fuav85D3rI3x/2hmW6W6M3K6yxBnndolHJUuQgc6MKWa2lxuSjXhqTn6mCeNVoMpyYQly0L8OfFEjYmi+pPqDo/1Nnmp/KCS1Nmp2PfaMSWbMCWbCB8YjuJTcJf37hYqNdw6/FZpdQlAEl5Eq4GjxpGQmnnEdV9KjLlU6tN6uKrAdMsnTrZW+nj3sh+nn3+408MXRT6ent75lhCDTsP/rgijsMZP7BNNhD3SxPIiL+fk6tEe9nr7wOlmdt8Wwfc3hzNjoIG5X7mZmqPHoIOHv3Sx6powrhth4BfvB+essRSfA5PSe/c40uq1WHIsrYNpD3GVuzDEH1/diqLgP8IYn7J3yog/Ox5DrAH8oPh+HG+l+BQUf/vxV6FsXOo4zsg8Q+0yxAmQ8CJahYVHMmrSdBzNTXiPMIZgU9jEHq4q8Nz6qYOPd3lZfrWV9Mgf/8S+2OdjT62f6Mea0D/YiP7BlsGal/7LwemvH3k8wqhUHZtuCqf+7gjKfhvOZ7Ot1Dj89Inu+M93R7WPt7/38NCZJlYUeZmUpSPBquWKwQY2lPlpcgXnG1isT93uMZ/Th2O/A8f+loDornbj2O/AXdPyt5RwTgKNaxqpXVGLq8JFzdIamjY1tenyOfjSQcr/Xd76fdXHVdi22nBXunGWOqleVE396nqix0W3u3/bVhvuCjexU1rOdygsNW1ponZFbUsLToqp3e1ClV6j5+4xd6tdhjhBvbiTWKhh0KjxbPluBZWlxaRm5ba7vtqQxgFDLhme3SpU17spisKvFzl5b4eXFVeHkRPTNlzcM8HIdSPbfsrOn9/M36aZuKD/sT99R5k1gIZdNT7Wlfp56Iz2b9aKonDjx07+eraJcKMGnx8OfUg/9K8vOLMLyT4dZSq+ojn2OSh6vKj1+/J/toSQ6PHRpF+fTuSoSFKvTqXqkyrKFpRhSjaReWsm1v4/jndx17g5fBKa3+Wn9K1SPLUetEYtxhQjGTdkEHVqVJv79rv9lL5dSsbNGWh+aJIzxBpImZ1CySslaAwa0q9LR2uUz6uH/GzAz+gT3UftMsQJ0iiKEqQvZeJEFaxbxUdvP0diWjamn6y6C2D11XNe/Rvoke18D/erTxy8872HD34WRl78j28SUSYNFkPHfeqaPzfy3pUWLj5sDMyAZ23MnWJixsCWy/69zUOCVUNmlJbvK3z85jMno1J1/PeK9ut3vLzezeI9Xv7zw3VrSnyc9VYzi2eHsWiXl/9s97LtV8E57f33CUP4MLzzU49F6Io1x/LxjI+JMMr2J4FKWl5EO/2HnUrWdyso3lVAet8B7a5v1kWz3TKGfMc3KlTXe81f1zLw8vQ32i4I99pFZuYM73j5947srPHTcFjXTpnNz/997qbCppASoeEXQw3cP7l983+Fzc8jX7lYfe2Pn+RPSdPx27EmznvHQaJVwxsXtw+jwaKv26l2CSJA3DbiNgkuAU5aXkSH9mzbwP9e/SuxiSlYrO3/yLWKl/PqXyfC36BCdUK0t9qSyI3JwT8tXJycgbEDeff8d9FqpAstkMlPT3QoZ+BwcoeMoqq0/R4t0LJw3XrrmT1clRBHNthV17qeihBHcu+p90pwCQLyExQd0mq1jJl8DiZzGE31tR0eU2rsw0FD3x6uTIiORfk9WBVpeRFHdm7OuYxIHKF2GaILSHgRR5TWJ4/BYyZSU34Qv7/jdSXWW8/AK0OnRC8R5+v82CIRWix6C/836v/ULkN0EQkv4og0Gg2nTrmAuKRUqssOdHhMsy6KbZZTe7gyITqW4pOXNNGxX4/4NUnWJLXLEF1E/tLFUUXFJnDKlAtx2m24XR3P5thuGUO9Lq6HKxOivSyPTN8X7Y1KGsXsgbPVLkN0IQkv4piGjJlEdt5Qyov3dni9X6Pj2/Dp+OXXSags1x2c2x+IE2fRWXho3EOyf1GQkXcbcUwGo5FxZ1+MyWyhsa7jXaVr9ckUWE7p4cqEaGugS6bui7ZuH3U7GZEZapchupiEF9EpGbmDyD/1dGoqSvD7Ot6Z+HvLadTpEnq4MiF+NNBVj0aRT9iixeik0fx8wM/VLkN0AwkvolM0Gg2nnHEeCcnpVB1h8K6i0fFN+HR88mslVGLCT6QSvKsIi84z68w8POFh6S4KUvIuIzotMjaeU6dehNtpx9Fs6/CYen2izD4Sqkr0HnuTSxH87hx9J2nhaWqXIbqJhBdxXIaMmcjAEeOoOLDviGu/bLOcRq0usYcrE6JFase9miKEnJJ0ClfkXaF2GaIbSXgRx0Wn1zPh3MuJS0o54tYBikbLN+HnyOJ1QhXZbo/aJQgVWXQW6S4KARJexHGLTUxh3LRLcTsdOJqbOjymQR/PeusZPVyZENDPbT/2QSJo/f6035MSnqJ2GaKbSXgRJ2TQ6AkMGnX07qM95qEUGQf0cGUi1A121aldglDJRX0u4qLci9QuQ/QACS/ihOh0OiacewXxyelUluw/4nFrws+iURvTg5WJUNfH04Re0aldhuhhfcL7cP+4+9UuQ/QQCS/ihMXEJzFu+qV43U7stsYOj/FqjKyKOB8f8mYieoYWiPbLdOlQYtaaefbsZzHpTGqXInqIhBdxUgaNGs/gMZOoOLgPn7fjfWXq9Ymst57es4WJkJbklcHiIUOBh8c/TEaErKIbSiS8iJOi1WqZfP7PSMvpT1nRLhRF6fC43ebh7Df27+HqRKhK93Y8DksEn0uyLmFan2lqlyF6mIQXcdLCo2I48+KrMIVZqassO+Jx31nPpkEX24OViVCV43GrXYLoAf3C+vHHyX9UuwyhAgkvoktk5g5i3NkzsDXWHXH1Xa/WxMqIi3FpzD1cnQg1ee6OfwdF8LBqrLx47ovotDKeLhRJeBFdZuTEaQwePYGKA3vx+Toe/2LTxbAq/Hz88qsnulG+U6ZLBzONouGp058iwSobwYYqeQcRXUan1zP5gpmkZPWlvGjPEce/VBiz2BA2uYerE6EkyefApBjVLkN0kxsH3sj4zPFqlyFUJOFFdKnImDjOuGg2BrOZuqryIx5XaBnJblN+D1YmQk2cT6bNBqOzEs7illNvUbsMoTIJL6LLZeflt45/aW5qOOJxa61TqNCn92BlIpQke2UsRLAZaBrIX6b/Re0yRC8g4UV0i1GTz2HEuKlUlezH7XJ2eIyi0bEq4gJs2sgerk6EggyvbC8dTBKVRF656BUZoCsACS+im+h0OiZf8HP65Y+mdN8ufL6O30hc2jCWR16KUyMrooqu1dfdcWgWgcfqs/Li9BeJtMgHHdFCwovoNuYwK1Mvu4bkzD5HXcCuSRfLishL8GDo4QpFMBvg7njHcxFYDD4Dj4x+hNzkXLVLEb2IhBfRrWLikzjrsjmEhUdSVVp8xONq9cl8FXEhPvmVFF1kiLMWOs7LIkBo/Vpuz72dKUOnqF2K6GXknUJ0u4y+Azn9oll4PW4aaquOeFy5MZtvw6fL+43oEhGKl3BFFkQMWArMTJjJVROvUrsS0QtJeBE9YvDoCZw29SIaaiqOuAM1wH7TQDaEndGDlYlgFi/TpQPW1LCp3HnOnWg0GrVLEb2QhBfRIzQaDadNvYhh46ZSebAIl8N+xGN3WkayzXJKD1YnglWKT974AtFp2tN47OLH0OlkZpHomIQX0WP0BgNnXnwVg0ZPoGz/bjxu1xGP3Rw2kULT8J4rTgSlTE/H21SI3muEdwRPzXgKk1FazcSRSXgRPcpktnD25b8kd8hISvYV4vV6jnjsuvAp7DQP77niRNDJdR+5hU/0PoMcg3jy4ieJDJcp0eLoJLyIHhcWHsn0K28gM3cQJXt34j/CGjAA661T2Gke0YPViWAyyHXk8VWid+nX2I/Hzn+MxLhEtUsRAUDCi1BFZGw80392PYlp2Rzcu/OIa8AArLeeKQFGnJA8Vz1aRV7mervsumz+fPafyUnPUbsUESDkr1qoJj45nXN+fgMx8YmU7iuUACO6nAk/kTJdulfLqs3iD2f8gfw82ahVdJ6EF6Gq1Kxcpl15PdbIaEqPsgovtASYHeaRPVidCAYJXlm5ubfKqs3i/jPv59Rhp6pdiggwEl6E6rLz8jnn5zdgjYg6ZoDZYD2DbWaZRi06L032Z+yVsmqzuP8MCS7ixEh4Eb1CzoBhnPPzGzsVYDZbJ7I+7AxZiVd0Srb7yDPahAoU6FvVlz+c8QdOHS7BRZwYCS+i18gZMLQlwEQeO8DstIxkdfi5+JBFrMTR9Zfp0r2G1q9lYMVA7pl6D6cNP03tckQAk/AiepWcAUM552c/BJhjDOLdbxrIyoiLZTdqcVSDXXVqlyAAvU9Pfmk+d5x9hwQXcdIkvIheJ2fAUM79+U1Yo6IpOUaAKTdmszTqShyasB6sUASSPp4m9Iq00KnJ7DYz7OAwbjn3FsaOGKt2OSIISHgRvVJ2Xj7n/vwmomLiOLB7+1EXsqvTJ7Ek6mc0aaN6sEIRSGL8FrVLCFnhjnCGlQzjhvNvkOAiuoyEF9FrZeflc8Evfk1CagYH9mw/6lYCNl0Mn0fNpFKf1oMVikCR5NWrXUJIimqKYlTNKG645AbGjRyndjkiiEh4Eb1aanY/LprzG9L75HFw9/ajbubo0obxReTl7DbJYleirXSvX+0SQk5cTRzjHeO59We3cspQWd5AdC0JL6LXi09O56Krf0PukFGU7N2J09F8xGP9Gh1rws9mXdiZ+OXXW/wgx+NWu4SQoVE0pJSmcIbhDG6ZdQsD+g5QuyQRhOTVXQSEyNh4zr/qFgaPmUh58V6amxqOenyhZQRfRF6KUyNLwwvIc9vULiEkGP1Gsvdkc3bi2dwy6xYyUzPVLkkEKY1ytKkcQvQybpeT5e+/zcavlxAVl0hUbMJRj7f6Gpjc9D7RvuoeqlD0RhU6C1Mzj/67Ik5OlCeKlN0pTBk2hVkXziLCGqF2SSKISXgRAcfr8bD68/dYs+xD9EYTCamZaDSaIx6vV9ycZvuMTPeuHqxS9DZjsnNxaqT7qDukNqeSuD+Rc8afw6XTL8VkNKldkghyEl5EQFIUhW1rv2LFh+/Q3NRAak5/dLqjr+WR59jAcPuX6JDNbkLRtIwhlOob1S4jqOgUHTlVOcTWxTLjrBmcM+mcY/4dCtEVJLyIgHZgz3aW/vd1yvbvJTWnH0bT0ce4xHnKGG/7mHC/vImFmjkpQ1lvrle7jKAR4Y8gfW86iYZErjz3SiaMmnDUFlAhupKEFxHw6qorWPqf1yj8fh2JqZlYI6OPerzB7+TU5iVkugt7pkDRK9yfMJj3w5vULiMopLnSiCqMIi89j1kXziKvT57aJYkQI+FFBAWXw86Kj/7Jpq+XYI2IJjYp9Zi36evcwqjm5ejx9kCFQm2vR/XlqVjZYfpkGBQD/Rv6oyvWceqwU5l1wSziYuLULkuEIAkvImj4fD42fPkZXy/+Hx6Xk+Ss3GP2v0d6axhv+4QYX1UPVSnU8q0lgeuTZZuAE5XkSyKtOA2dS8c5k87hwikXysBcoRoJLyLo7NuxmS/eX0DFgb0kZ/XFbLEe9XiN4mOI41sGOdagQ1ZiDVY2jZ6xWakgwzKOi17RM8Q5BGWXQmJ8IpdPv5zThp8m41uEqiS8iKDUUFvF8vffZvvGb4iMiSc6PumYL7bR3krG2j6TVpggNjarPzatU+0yAkaCL4FBdYOoLallaN5QZl4wUxaeE72CrLArglJUbALnzb6FMy6ahcftomTvTny+o49tqdcn8lnULL63jMUnfxpBKd4n3RydoVN0DHcNJ3dfLs1VzZwz6Rx+/YtfS3A5TitWrECj0VBfX692KR3qbH3Z2dk8/fTTPVJTZ8krtAhaBqOR06ZexMXX3E5iehbFuwqw244+RVrR6Pg+bByLo2ZRq5MVWYNNqle6Oo4lzh/H5IbJ+Hb4iAiL4NrLrmXWhbOwHqP79XjMmTMHjUbT7mv69OmdPsfpp5/O7bff3mU19VaHP1dGo5Hc3FwefPBBvN6Tn2gwbtw4ysrKiIqKAuD1118nOjq63XFr167lhhtuOOn760oSXkSX621pPjsvn8uuv4sR46dSW1FKxcEi/P6jj22p1yeyOGoWWyzj8KLv9hpFz8jyyGyjI9Ereoa5hzGgaAB1B+sYO2Isd157JxNGT0Cr7fq3iunTp1NWVtbm65///GeX3oeiKF3yJq+2Q8/Vrl27+O1vf8sDDzzAX/7yl5M+r9FoJDk5+Zhd6gkJCYSFhZ30/XUlCS8hrLsSfW9M8+FRMUy78nrO+fmNhFnDKS7chqP56Gt+KBodW8PG8kn0HA4a+vZInaJ75bodapfQK2V5s5jSMAVlh4LZaGbOpXO4+ec3k5KY0m33aTKZSE5ObvMVExMDtHwAMhqNfPXVV63HP/HEEyQmJlJRUcGcOXNYuXIlf//731tfw4qKilo/OC1atIhRo0ZhMplYtWoVfr+fuXPnkpOTg8ViYdiwYfznP/9pPfeh2y1evJgRI0ZgsVg488wzqaysZNGiRQwcOJDIyEhmzpyJ3W5vvd2xznu45uZmIiMj213//vvvY7VaaWo68uvRoecqKyuLm2++malTp/Lhhx8CUFdXxy9+8QtiYmIICwvjnHPOYdeuH7dC2b9/PxdccAExMTFYrVYGDx7Mp59+2uZx19fXs2LFCq655hoaGhpan9MHHngAaPtBc+bMmVx55ZVt6vN4PMTHx/Pmm28e9/NyouQjZYibPn06r732Gi6Xi08//ZRbbrkFg8HAvffee8LnPJTmjyUhoWe7ZXQ6HfmnTia9Tx6rFv2b7Ru+wWAykZCaddRPls26KL6MvJhU915GNS8nwl/fc0WLLjXQ3QDIhoGHRPujGeUehafcQ3lTOWPyx3DZ9MtIT05Xta5DXUJXXXUVmzdvZu/evdx///38+9//Jikpib///e8UFhYyZMgQHnzwQaDl9aSoqAiAe+65hyeffJI+ffoQExPD3Llzefvtt3nhhRfo168fX375JbNnzyYhIYHJkye33u8DDzzAs88+S1hYGFdccQVXXHEFJpOJd955B5vNxowZM3jmmWe4++67ATp9XgCr1crPfvYzXnvtNS677LLWyw99HxHR+d9Li8VCTU0N0PIhdNeuXXz44YdERkZy9913c+6551JQUIDBYOCWW27B7Xbz5ZdfYrVaKSgoIDw8vN05x40bx9NPP80f//hHdu7cCdDhcbNmzeLyyy/HZrO1Xr948WLsdjszZsw47uflREnLS4g7UqIP5jQfk5DMubN+xbkzbyLMGkFx4VYctmOvvFpq7MMn0Vez2TJeupIC1ABXPVpFXvaMipHR7tGc3ng61buq0Wq0/OLiX3DLrFt6LLh8/PHHhIeHt/l69NFHW69/+OGHiYmJ4YYbbmD27NlcffXVXHjhhQBERUVhNBoJCwtrbbU5fE2nBx98kLPOOou+fftitVp59NFH+cc//sG0adPo06cPc+bMYfbs2bz44ottanr44YcZP348I0aM4Nprr2XlypXMnz+fESNGMHHiRC677DKWL18OgMvl6vR5D7nuuutYvHgxZWVlAFRWVvLpp5/yy1/+slPPmaIoLF26lMWLF3PmmWe2hpZXXnmFiRMnMmzYMBYsWEBJSQnvv/8+AMXFxYwfP578/Hz69OnD+eefz6RJk9qd22g0EhUVhUajaX1OOwov06ZNw2q18t5777Ve9s4773DhhRcSERFxQs/LiZBXYNHGoUQf7Glep9Mx5JRJpOX05+vP/kPB+tXo60wkph29Fcav0bMt7DT2mQYx0r5SthgIMAYUIv1m6nX2Yx8chDSKhlxfLkPcQ6irrmNfwz6GDxzO5edcTlZqVo/WcsYZZzB//vw2l8XGxrb+32g0smDBAoYOHUpWVhZ/+9vfOn3u0aNHt/5/9+7d2O12zjrrrDbHuN1uRowY0eayoUOHtv4/KSmJsLAw+vTp0+ayNWvWHPd5DznllFMYPHgwb7zxBvfccw9vv/02WVlZHYaJwx0Keh6PB7/fz8yZM3nggQdYtmwZer2eU089tfXYuLg48vLy2L59OwC33XYbN998M59//jlTp07l0ksvbfM4j5der+eKK65gwYIFXHXVVTQ3N/PBBx/w7rvvnvDzckJ1dNmZREBTFIVly5axePFizjnnHN5//32+/vprxo0bB8CCBQvIyMjg/fff5/LLL6e4uJhLL72U/Px8gDZ/4If7aZo/ksPT/FVXXQV0nOaXLl3K2LFjW+9z1apVvPjiiyfcFBmTkMw5M28me8AwVn/2X4oLtxKXnEZE9NGXPLfrIlkVcQEJnoMMs39Forf0hO5f9LxEn4H6ENz4OMGXwCjPKPQ2PXtK9xATFcPM82cyZdwUVVbKtVqt5ObmHvWY1atXA1BbW0ttbS1Wa+dmPB1+nM1mA+CTTz4hLS2tzXEmU9vHbTAYWv+v0WjafH/oskOD/Y/nvIe77rrreO6557jnnnt47bXXuOaaa445YPZQ0DMajaSmpqLXd/6t+7rrrmPatGl88sknfP7558ydO5ennnqKX//6150+x0/NmjWLyZMnU1lZyZIlS7BYLK0zxU70eTleEl5CXEeJ/pJLLuHjjz8OmTSv0+kYMmYiGX0HsOaLT9i6ZiV1VRUkZ+RgNB99OfkqQzpLo35OmnsPQ+2riPFVn1QtovuleaHQqHYVPSfKH0W+J58kVxL7S/ajQcOEURM4/4zzyUjJULu8I9qzZw933HEHL7/8MgsXLuTqq69m6dKlrS2jRqMRn893zPMMGjQIk8lEcXFxl423OJnzzp49m7vuuot58+ZRUFDA1VdffczbHCnoDRw4EK/Xy3fffdf6QbOmpoadO3cyaNCg1uMyMjK46aabuOmmm7j33nt5+eWXOwwvnX1Ox40bR0ZGBgsXLmTRokVcfvnlrUGvu57vn5LwEuI6SvSHRrEfTTCm+ajYBKZeejV5w0/hm8/fZ9+OzZgsVhJSMtAeY4+kEmNfSgx9yHZvZ6h9NeH+hi6pSXS97BCZLh3lj2KIZwhp3jTKK8vZ1bSLvJw8zj/jfIYPHN4t05+Ph8vlory8vM1ler2e+Ph4fD4fs2fPZtq0aVxzzTVMnz6d/Px8nnrqKX73u98BLWPmvvvuO4qKiggPD2/T5XS4iIgI7rzzTu644w78fj8TJkygoaGBr7/+msjIyE6Fh648b0xMDJdccgm/+93vOPvss0lPP/ExRv369eOiiy7i+uuv58UXXyQiIoJ77rmHtLQ0LrroIgBuv/12zjnnHPr3709dXR3Lly9n4MCBHZ4vOzsbm83GsmXLGDZsGGFhYUecIj1z5kxeeOEFCgsLW8cBnczzcrwkvIS4jhJ9KKd5jUZDZu4gUjJzKVi/iu+WfUTxrm3EJqUSER139OZdjYYi0yCKjXnkOrcw2PEtFiU0x1b0Zv3czQTzBkeR/kjyvflk+DKob6hne8V2kuKSuOriq5g8ZjKWY7Qm9pTPPvuMlJS2U7Hz8vLYsWMHjzzyCPv37+fjjz8GICUlhZdeeomf//znnH322QwbNow777yTq6++mkGDBuFwONi3b98R7+uhhx4iISGBuXPnsnfvXqKjoxk5ciT33XffST2GEz3vtddeyzvvvNPpgbpH89prr/Gb3/yG888/H7fbzaRJk/j0009bXzt9Ph+33HILBw8eJDIykunTpx9x/NC4ceO46aabuPLKK6mpqeFPf/pT6wSLn5o1axaPPPIIWVlZjB8/vs113fV8H072Ngphc+bMob6+vnVU+uEuvvhidu3a1SbN7969u3XA7k/T/K9+9SuysrJYuHAhK1as4IwzzqCuro7o6GhWr17N+PHjWbp0aZs0n52dze23395mlcw//OEPvPfee61pfsKECW2ue+GFF3jqqae6Lc3/VGNdDWtXfMr33y7H6WgmITUTi7VzUxp1iodc5/cMcK7D6j/2bCbRM/YaIrgoPUbtMrpcpD+Swd7BZPmycLlcFB0swmQyMX7keM6ZdA5J8Ulqlyh+8NZbb3HHHXdQWlqK0RhCfZhdSFpeRIdCNc3/VGRMHGdePJu8oWNYs/xj9mzbiKIoJKRlYTrGJ1ifxsBOy0gKzcPIdm1nkHMtUb7abqtVdE4fTxN6JQGvJvBXXgWI8EcwxDuELF8WXq+X/eX7cbgcDOk3hAvOvICBfQfKDtC9hN1up6ysjMcee4wbb7xRgstJkJYXITrJ7/ezb/sm1q5YxP7Crej0ehJSMzF0dqaGopDu2c0gx1rivWXdW6w4qjMzB1Gls6ldxkmJ98XT39efDF8Gfq+fkooSmu3NZKZmcvaEsxk3chxGg7w59iYPPPAAjzzyCJMmTeKDDz7ocNkI0TkSXoQ4Tl6Ph13fr2XtikWUFhViNFuIT8lArzcc+8Y/SPQUM8ixjhTPviAefdF7/Tx1KFtN9WqXcdy0ipYsXxb9vf2JVWLxer2UVJZga7aRmZLJlHFTOG34aYSHyZuiCG4SXoQ4QW6Xk+0bvmHdykVUHNyHxRpBXHLacYWYcF89uc7N9HFtxaw4u7Facbi7EoewyHr0HcZ7kzB/GLm+XPp6+2LGjNfnpbSilKbmJjJSMpgydgpjR4yV0CJChoQXIU6So9lGwbpVbFy9lKqyAxiNZuJT0jvfnQRoFS+Z7kL6OzdJl1IPmB/Tj+ejXWqXcUwJvgT6e/uT7k9Hixavz0tZZRmNtkYykjM4c+yZjB0xlohODiIXIlhIeBGiizjtzezcvIZNq5dSXrwHrU5PfHI6JsvxbSUf7a2kn3Mz2a7tGAiNNUl62hdhqfwmqXfOVzAoBjJ9mfTz9iNGaZkV5fF4KKsqo6m5ibSktNaWlsjwSJWrFUIdEl6E6GIet4vdW9ezafUyDu7Zgd/vJz45HUv48X061itu0t27yXZtJ9mzHy3yp9pVKnVmpmQmql1GK62iJdWfSrY3m1R/KjpaFkW0NdsoqyrD6/OSlpTG6aeezrgR4yS0iJAn4UWIbuLzeinauYVNq7+gaOcW3C4nUbEJRMYmHPfqpia/nSzXDrLdO6RbqYuMycrFqXWrdv8aRUOiP5EsXxYZvgyMtMwM8vv91NTXUFVThdlkpn9OfyaOnsiwAcMIO85WPCGClYQXIbqZ3++nZN9Odmz8lsLNa2isq8ZksRKbmHLMvZM6Eu6rI9u1gyzXdqL8dd1QcWiYnjGEEn3PD9qN9ceS5csi05tJGD+GEbfHTXlVOY22RuKi4xidP5rThp1Gv+x+qi/lL0RvI+FFiB7UWFfD7q3r+X7NSioOFuH3eYmOTzr21gNHEOGrJc29hzT3XhK8JdK1dBzmpAxlvbm+2+9Ho2iI88eR6k8lw5dBpPJjl4+iKNjsLV1Dfp+ftOQ0Jo6ayOj80STG9Z5uLSF6GwkvQqjA6/Gwf9dWdmz8lj3bNmBrrMMcFkF0fCJmi/WEzmn0O0j17CPNvYcUTxFGRb0ukUDwx4TBvBfePds2WBQLKb4UUnwpJPuTW7uEDnG6nFTWVNJkayLMEkZenzwmjprI0AFDe83eQ0L0ZhJehFBZTUUpe7ZtYPvGb6gqLcbtchIeGU1UXOJxTbc+nEbxkeg9SLKnmETPAWK9Fejwd3Hlge2NqL48Gds1s7m0ipZ4fzwp/pbAcmiW0OHcHjfVddXUN9RjMBhITUrllPxTGNxvMH0y+kjXkBDHQcKLEL2Ez+ulbP9u9u7YQuHm76itLMPn8xERHUtUbAI6/YlP7dUpHhI8JSR6D5LkOUCstzzkw8waSwLXJp9YK4dW0RLrjyVOiSPRl0iSPwkD7Rcn9Pq81NTXUFtXi1arJSE2gdFDRpOfl0+/7H6yfL8QJ0jCixC9kNvl5MCe7ewt2MTuretpqK0CwBoZQ0R0LEaT+aTOfyjMxHvLiPVWEOurIMwf2Hv9HC+bRs+4rDQUzTFeAhWIUCKI88e1fsUoMWjpuKXE6/NS31hPTV0Nfr+f2OhYhg8czrABwxjQZ4DMGBKiC0h4EaKXs9uaKN69jeJdBezbsZmG2mq8HjcWawQR0bFYrBFdsmuwyW9vCTKHvnwVWP3dMyaktxiblYdN62hzmUWxEOOPaRNWfjpm5XCKotDsaKauoQ5bsw2NRkNURBQD+g5g5KCRDMwdSHREdDc/EiFCi4QXIQKI2+WkbP9uDu7dye5tG6itKMVpt6E3GgmPisUaEYW+C7sijH4Hkb5aInx1RPrriPAd+qpHj7fL7qenedFRr4vinqQhNGjNRClRRPojiVQijxpUDvF4PdQ31lPXUIfX68VisZAYl8jQ/kPJzc6lT0YfYiLbj3sRQnQNCS9CBCifz0d12QFK9hWyb8dmyov3Ymuqx+/zYjCasUZGd3mYaaUohPmbiPDVYfU3YvE3Y/HbsCjNWPzNmP0t/+rwdf19H4MPHQ6t9YevcBxaK9/s2Y89PJHo7OHU6mNo1EbCcbRW+Xw+bHYbDU0N2JptaLVaYqJiyM3KZVDuIPpm9iU9KR39SYxLEkJ0noQXIYKE3dZIxcEiKkv2c2DPdioO7GsTZsIiorCEhWM0W7qkm6kzjH4HZr8dg+LCoLjRKx4MuNEr7h+/V9xolWOHHJ9Gj1djxKMx4NUY8WoMeGj516sx4taYcGiteLTtxwN98OUibOYwxo+fcsz7URQFh9NBU3MTTc1NuD1uNGgIt4aTEJPAsAHD6JvVlz4ZfWSZfiFUIuFFiCBltzVSWbKfypL9FO8uoLKkCEezDbfLCYDRZMFiDcdijejRQKOG5WtXstdhZ8qUC9pd5/a4W4OK3WFHgwaTyURUeBSZqZnkZuaSkphCWlIaCSewtYMQoutJeBEiRLgcdmqryqitLKO2spSy/XuoLj/4Q6BpGbSqNxgxmS0YzRZM5jAMJnNQvFmvL9jIdwf3Mm7CNBwuB3anHZfLhUajQafTEWGNIDk+mX7Z/UhPTiclMYWUhBTMJzmrSwjRPSS8CBHCXE4HdVVl1FaUUlddQU1FKdXlB7HbGnA7HT+00igoigajyYTBZMZgMKI3mtAbjBgMRrQ6ndoPA7/fj9fjxutx43G78Ho8eNxOPC4niuKn1mFnS101OYOGExEeSWpSKulJ6STEJpAYl0hKYgpR4VFB3fokRDCR8CKEaENRFBzNNprqa374qqWhrprqsgM01FTictrxuN2tYcHv96MBFDRotVq0Oh06nR6tTtfypdX9cFnL/zVaLRqOHhL8fl/Ll+/Qv358Pm/rZT6fF7/vx3EyGo0GvcHYEqiMRowmMxEx8cQlphEdl0B4VAyK2UJSSibRkdHoekHgEkKcOAkvQohOUxQFt8uJ027D0dyEo/nHf512G7bGelyOZlwOOy6nA7erpfXG7/sxdHTmJedQd05L+NFjMJkwmswYTS1dWmaLlYioGMw/jNmxWMMxh/3w/7BwTJYwaUURIohJeBFCdCu/34/P62lprXG78PmOvj6Moijo9Qb0RmNra0owjLsRQnQdCS9CCCGECCjycUYIIYQQAUXCixBCCCECioQXIYQQQgQUCS9CCCGECCgSXoQQQggRUCS8CCGEECKgSHgRQgghRECR8CKEEEKIgCLhRQghhBABRcKLEEIIIQKKhBchhBBCBBQJL0IIIYQIKBJehBBCCBFQJLwIIYQQIqBIeBFCCCFEQJHwIoQQQoiAIuFFCCGEEAFFwosQQgghAoqEFyGEEEIElP8H92Cr/b7CkYsAAAAASUVORK5CYII=\n"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "dataframe[dataframe['Sentiment'] == 'Negative']['OriginalTweet'].shape"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "ivyCz34WLEus",
+        "outputId": "e859e1a7-6ac0-407d-cc09-4fdc0499ad99"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "(1041,)"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 6
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "all_positive_tweets = list(dataframe[dataframe['Sentiment'] == 'Positive']['OriginalTweet'].astype(str)) # Making equal positive and negative tweet counts\n",
+        "all_negative_tweets = list(dataframe[dataframe['Sentiment'] == 'Negative']['OriginalTweet'].astype(str))[:947]"
+      ],
+      "metadata": {
+        "id": "M5KBPeTMLM74"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Splitting training and testing set. 80/20 split\n",
+        "positive_train, positive_test = train_test_split(all_positive_tweets, test_size=0.2, random_state=42)\n",
+        "negative_train, negative_test = train_test_split(all_negative_tweets, test_size=0.2, random_state=42)\n",
+        "\n",
+        "print(\"Size of training dataset: \",len(positive_train) + len(negative_train))\n",
+        "print(\"Size of testing dataset: \", len(positive_test)  + len(negative_test))\n",
+        "\n",
+        "# print positive in green\n",
+        "print('\\033[92m' + '\\npositive in green: ')\n",
+        "print('\\033[92m' + all_positive_tweets[random.randint(0,947)])\n",
+        "print('\\033[91m' + '\\nnegative in red: ')\n",
+        "# print negative in red\n",
+        "print('\\033[91m' + all_negative_tweets[random.randint(0,947)])"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Og7Km99aLYPK",
+        "outputId": "420737a5-b42a-4613-8b4e-bab0587d97c3"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Size of training dataset:  1514\n",
+            "Size of testing dataset:  380\n",
+            "\u001b[92m\n",
+            "positive in green: \n",
+            "\u001b[92mI work in retail, and so far, our store hasn't even issued a statement acknowledging that they recognize Covid-19 to their clients.  I'd say a solid 75% of people we work with on a regular basis are elderly.\n",
+            "\u001b[91m\n",
+            "negative in red: \n",
+            "\u001b[91mDespite the government assuring theres no need to hoard supplies, this  supermarket had to endure long lines of shoppers. Supermarket staff says they always ran out of two things: alcohol and eggs. #covid #Covid_19 #COVID19 https://t.co/ORX6y2BOqb\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Split on spaces\n",
+        "tweet = all_positive_tweets[12]\n",
+        "word = tweet.split() # space tokenizer\n",
+        "print('Using Split :',word)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "V0OEWiOgLc3q",
+        "outputId": "e3a59522-a46a-472c-bd3e-663c26a83955"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Using Split : ['Consumers', 'have', 'increased', 'their', 'online', 'shopping', 'due', 'to', 'coronavirus.', 'https://t.co/5mYfz3RAD0', '#retail', '#ecommerce', '#study', '#coronavirus', 'https://t.co/Dz3H6zrWUT']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Using 're' library to work with regular expression.\n",
+        "\n",
+        "tokens = re.findall(r\"[\\w']+\", tweet)\n",
+        "print('Using regexes :',tokens)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "kvSykkZJMFq6",
+        "outputId": "053af03a-8fab-4178-c470-7a1836fd15ca"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Using regexes : ['Consumers', 'have', 'increased', 'their', 'online', 'shopping', 'due', 'to', 'coronavirus', 'https', 't', 'co', '5mYfz3RAD0', 'retail', 'ecommerce', 'study', 'coronavirus', 'https', 't', 'co', 'Dz3H6zrWUT']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import nltk\n",
+        "nltk.download('punkt_tab')\n",
+        "from nltk.tokenize import word_tokenize\n",
+        "\n",
+        "words = word_tokenize(tweet)\n",
+        "print('Using NLTK :',words)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "p267MqtlMgC5",
+        "outputId": "fab0799f-a928-4c3e-9261-a1a1991353d3"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "[nltk_data] Downloading package punkt_tab to /root/nltk_data...\n",
+            "[nltk_data]   Unzipping tokenizers/punkt_tab.zip.\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Using NLTK : ['Consumers', 'have', 'increased', 'their', 'online', 'shopping', 'due', 'to', 'coronavirus', '.', 'https', ':', '//t.co/5mYfz3RAD0', '#', 'retail', '#', 'ecommerce', '#', 'study', '#', 'coronavirus', 'https', ':', '//t.co/Dz3H6zrWUT']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "V3Q497VyMnvm"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
